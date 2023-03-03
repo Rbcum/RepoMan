@@ -1,5 +1,7 @@
 # RepoMan
 
+[![Rolling Build](https://github.com/Rbcum/RepoMan/actions/workflows/rollling_build.yml/badge.svg)](https://github.com/Rbcum/RepoMan/actions/workflows/rollling_build.yml)
+
 A git/repo client for AOSP developers.
 
 RepoMan is designed to work with Google's repo tool. No more branch & manifest names copy around!
