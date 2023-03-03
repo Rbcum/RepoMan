@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resources/action_changes.svg</file>
+        <file>resources/action_history.svg</file>
+        <file>resources/icon_refresh.svg</file>
+        <file>resources/action_push.svg</file>
+        <file>resources/action_pull.svg</file>
+        <file>resources/action_branch.svg</file>
+        <file>resources/action_folder.svg</file>
+        <file>resources/action_term.svg</file>
+        <file>resources/action_reset.svg</file>
+        <file>resources/action_fetch.svg</file>
+        <file>resources/action_clean.svg</file>
+        <file>resources/icon_tag.svg</file>
+        <file>resources/icon_branch.svg</file>
+        <file>resources/icon_cloud.svg</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,56 @@
+name: Rolling Build
+
+on:
+  push
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+
+    steps:
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3.1.0
+      with:
+        version: 6.2.4
+        modules: qt5compat
+        cache: true
+
+    - uses: actions/checkout@v3
+
+    - name: Configure CMake
+      run: cmake -B build
+
+    - name: Build
+      run: cmake --build build
+
+    - name: Package
+      run: |
+        while IFS='' read -r file; do
+          mkdir -p `dirname artifacts/tmp/$file`
+          find ${{env.Qt6_DIR}}/$file* -type f -exec \
+            cp -v '{}' artifacts/tmp/$file ';'
+        done < .deps
+
+        cat > artifacts/tmp/RepoMan.sh << 'EOF'
+        appname=`basename $0 | sed s,\.sh$,,`
+        dirname=`dirname $0`
+        export LD_LIBRARY_PATH="$dirname"/lib/:$LD_LIBRARY_PATH
+        $dirname/$appname "$@"
+        EOF
+        chmod a+x artifacts/tmp/RepoMan.sh
+
+        cp build/RepoMan artifacts/tmp
+
+        (cd artifacts/tmp && \
+          zip -r ../RepoMan_${{runner.os}}_${{runner.arch}}.zip .)
+        rm -rf artifacts/tmp
+
+    - name: Github Release
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      run: |
+        wget -qO- https://github.com/tcnksm/ghr/releases/download/v0.16.0/ghr_v0.16.0_linux_amd64.tar.gz |\
+          tar xvz -C ..
+        ../ghr_v0.16.0_linux_amd64/ghr -delete Rolling artifacts/
