@@ -74,12 +74,10 @@ void HistoryGraphDelegate::paint(
                 }
             }
 
-            paintBadges(painter, laneId, 0, commit.heads, contentRect, badgeOffset);
-            paintBadges(painter, laneId, 1, commit.remotes, contentRect, badgeOffset);
-            paintBadges(painter, laneId, 2, commit.tags, contentRect, badgeOffset);
+            paintBadges(painter, laneId, commit, contentRect, badgeOffset);
         }
 
-        QRect subjectRect = contentRect.adjusted(badgeOffset, 0, 0, 0);
+        QRect subjectRect = contentRect.adjusted(badgeOffset + 6, 0, 0, 0);
         if (subjectRect.isValid()) {
             QPalette::ColorGroup cg =
                 opt.state & QStyle::State_Enabled ? QPalette::Normal : QPalette::Disabled;
@@ -118,77 +116,126 @@ static const QColor &getLaneColor(int laneId)
     return S_COLORS[qMax(0, laneId) % 10];
 }
 
-void HistoryGraphDelegate::paintBadges(QPainter *painter, int laneId, int type,
-    const QStringList &badges, const QRect &contentRect, int &badgeOffset) const
+void HistoryGraphDelegate::paintBadges(QPainter *painter, int laneId, const Commit &commit,
+    const QRect &contentRect, int &badgeOffset) const
 {
     static int nailWidth = 16;
     static int lMargin = 3;
     static int rMargin = 6;
     static int vMargin = 2;
-    static int badgeSpacing = 6;
+    static int badgeSpacing = 3;
     static int cornerRadius = 2;
     static qreal iconPadding = 3.2;
+
+    int type = 0;
+    int count = 0;
+    QString text;
+    if (commit.heads.size() > 0) {
+        type = 0;
+        count += commit.heads.size();
+        text = commit.heads.first();
+    }
+    if (commit.remotes.size() > 0) {
+        if (count == 0) {
+            type = 0;
+            text = commit.remotes.first();
+        }
+        count += commit.remotes.size();
+    }
+    if (commit.tags.size() > 0) {
+        if (count == 0) {
+            type = 1;
+            text = commit.tags.first();
+        }
+        count += commit.tags.size();
+    }
+    if (count == 0) {
+        return;
+    }
 
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
     QFont font = painter->font();
     font.setPointSize(9);
     painter->setFont(font);
-    for (int i = 0; i < badges.size(); ++i) {
-        QString badgeText = badges[i];
-        int width =
-            painter->fontMetrics().horizontalAdvance(badgeText) + nailWidth + lMargin + rMargin;
-        QRectF badgeRect(contentRect.x() + badgeOffset + 0.5, contentRect.top() + vMargin + 0.5,
-            width, contentRect.height() - vMargin * 2 - 1);
 
-        // Badge
-        QPainterPath path;
-        path.addRoundedRect(badgeRect, cornerRadius, cornerRadius);
-        painter->setPen(QPen(QColor(0xAAAAAA), 1));
+    int width = painter->fontMetrics().horizontalAdvance(text) + nailWidth + lMargin + rMargin;
+    QRectF badgeRect(contentRect.x() + 0.5, contentRect.top() + vMargin + 0.5, width,
+        contentRect.height() - vMargin * 2 - 1);
+
+    // Badge
+    QPainterPath path;
+    path.addRoundedRect(badgeRect, cornerRadius, cornerRadius);
+    painter->setPen(QPen(QColor(0xAAAAAA), 1));
+    painter->fillPath(path, QColor(0xF8F6F6));
+    painter->drawPath(path);
+
+    // Nail
+    path.clear();
+    path.setFillRule(Qt::WindingFill);
+    QRectF nailRect = badgeRect.adjusted(0, 0, -(width - nailWidth), 0);
+    path.addRoundedRect(nailRect, cornerRadius, cornerRadius);
+    path.addRect(nailRect.adjusted(cornerRadius, 0, 0, 0));
+    painter->fillPath(path.simplified(), getLaneColor(laneId));
+
+    // Icon
+    painter->setPen(QPen(Qt::white, 1.4));
+    QRectF iconRect = nailRect.adjusted(iconPadding, iconPadding, -iconPadding, -iconPadding);
+    switch (type) {
+        case 0:  // branch
+        case 1:  // remote
+            painter->drawLine(iconRect.center().x() - 1, iconRect.top() + 1,
+                iconRect.center().x() - 1, iconRect.bottom());
+            painter->drawLine(iconRect.center().x() - 1, iconRect.center().y() + 1,
+                iconRect.center().x() + 3, iconRect.center().y() - 2);
+            break;
+        case 2:  // tag
+            painter->save();
+            painter->translate(iconRect.center().x() - 0.9, iconRect.center().y() - 0.5);
+            painter->rotate(-45);
+            path.clear();
+            path.moveTo(3.2, -iconRect.height() * 0.17);
+            path.lineTo(3.2, iconRect.height() / 2);
+            path.lineTo(-3.2, iconRect.height() / 2);
+            path.lineTo(-3.2, -iconRect.height() * 0.17);
+            path.lineTo(0, -iconRect.height() / 2);
+            path.closeSubpath();
+            painter->drawPath(path);
+            painter->restore();
+            break;
+    }
+
+    // Text
+    painter->setPen(Qt::black);
+    QRectF textRect = badgeRect.adjusted(nailWidth + lMargin, 0, -rMargin, 0);
+    painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, text);
+
+    // Stacks
+    painter->setPen(QPen(QColor(0xAAAAAA), 1));
+    QRectF stackRect = badgeRect.adjusted(width, 0, badgeSpacing, 0);
+    for (int i = 1; i < count; ++i) {
+        path.clear();
+        path.moveTo(stackRect.left(), stackRect.top() + cornerRadius);
+        path.arcTo(stackRect.left() - cornerRadius * 2, stackRect.top(), cornerRadius * 2,
+            cornerRadius * 2, 0, 90);
+        path.lineTo(stackRect.right() - cornerRadius, stackRect.top());
+        path.arcTo(stackRect.right() - cornerRadius * 2, stackRect.top(), cornerRadius * 2,
+            cornerRadius * 2, 90, -90);
+        path.lineTo(stackRect.right(), stackRect.bottom() - cornerRadius);
+        path.arcTo(stackRect.right() - cornerRadius * 2, stackRect.bottom() - cornerRadius * 2,
+            cornerRadius * 2, cornerRadius * 2, 0, -90);
+        path.lineTo(stackRect.left() - cornerRadius, stackRect.bottom());
+        path.arcTo(stackRect.left() - cornerRadius * 2, stackRect.bottom() - cornerRadius * 2,
+            cornerRadius * 2, cornerRadius * 2, -90, 90);
+        path.closeSubpath();
+
         painter->fillPath(path, QColor(0xF8F6F6));
         painter->drawPath(path);
 
-        // Nail
-        path.clear();
-        path.setFillRule(Qt::WindingFill);
-        QRectF nailRect = badgeRect.adjusted(0, 0, -(width - 1 - nailWidth), 0);
-        path.addRoundedRect(nailRect, cornerRadius, cornerRadius);
-        path.addRect(nailRect.adjusted(cornerRadius, 0, 0, 0));
-        painter->fillPath(path.simplified(), getLaneColor(laneId));
-
-        // Icon
-        painter->setPen(QPen(Qt::white, 1.4));
-        QRectF iconRect = nailRect.adjusted(iconPadding, iconPadding, -iconPadding, -iconPadding);
-        switch (type) {
-            case 0:  // branch
-            case 1:  // remote
-                painter->drawLine(iconRect.center().x() - 2, iconRect.top() + 1,
-                    iconRect.center().x() - 2, iconRect.bottom());
-                painter->drawLine(iconRect.center().x() - 2, iconRect.center().y() + 1,
-                    iconRect.center().x() + 2, iconRect.center().y() - 2);
-                break;
-            case 2:  // tag
-                painter->save();
-                painter->translate(iconRect.center().x() - 0.9, iconRect.center().y() - 0.5);
-                painter->rotate(-45);
-                path.clear();
-                path.moveTo(3.2, -iconRect.height() * 0.17);
-                path.lineTo(3.2, iconRect.height() / 2);
-                path.lineTo(-3.2, iconRect.height() / 2);
-                path.lineTo(-3.2, -iconRect.height() * 0.17);
-                path.lineTo(0, -iconRect.height() / 2);
-                path.closeSubpath();
-                painter->drawPath(path);
-                painter->restore();
-                break;
-        }
-
-        // Text
-        painter->setPen(Qt::black);
-        QRectF textRect = badgeRect.adjusted(nailWidth + lMargin, 0, -rMargin, 0);
-        painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, badgeText);
-        badgeOffset += width + badgeSpacing;
+        stackRect.translate(badgeSpacing, 0);
     }
+    badgeOffset = stackRect.right() - contentRect.left() - badgeSpacing;
+
     painter->restore();
 }
 

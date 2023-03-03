@@ -2,6 +2,7 @@
 #define HISTORYGRAPHDELEGATE_H
 
 #include <QStyledItemDelegate>
+#include "global.h"
 
 class GraphLane
 {
@@ -92,8 +93,8 @@ public:
 private:
     GraphTable m_graphTable;
 
-    void paintBadges(QPainter *painter, int laneId, int type, const QStringList &badges,
-        const QRect &contentRect, int &badgeOffset) const;
+    void paintBadges(QPainter *painter, int laneId, const Commit &commit, const QRect &contentRect,
+        int &badgeOffset) const;
 };
 
 #endif  // HISTORYGRAPHDELEGATE_H
