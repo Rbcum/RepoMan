@@ -266,10 +266,13 @@ void MainWindow::onActionSwitchManifest()
 
 void MainWindow::onActionRepoStart()
 {
+    QString targetManifest = QFileInfo(manifest.filePath).symLinkTarget();
+    QString defName = QFileInfo(targetManifest).fileName().split(".").first();
+
     QInputDialog inputDlg(this);
     inputDlg.setWindowTitle("Repo start");
     inputDlg.setLabelText("New branch name:");
-    inputDlg.setTextValue(QFileInfo(manifest.filePath).fileName().split(".").first());
+    inputDlg.setTextValue(defName);
     inputDlg.resize(500, 0);
 
     if (inputDlg.exec()) {
