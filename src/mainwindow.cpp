@@ -351,8 +351,9 @@ void MainWindow::refresh(const HistorySelectionArg &arg)
 
 void MainWindow::updateUI()
 {
-    QString manFile = QFileInfo(manifest.filePath).fileName();
-    m_statusLabel->setText(QString("  %1  |  %2").arg(manFile, manifest.revision));
+    QString targetManifest = QFileInfo(manifest.filePath).symLinkTarget();
+    m_statusLabel->setText(
+        QString("  %1  |  %2").arg(QFileInfo(targetManifest).fileName(), manifest.revision));
 
     m_projectListBox->clear();
     for (int i = 0; i < manifest.projectList.size(); ++i) {
