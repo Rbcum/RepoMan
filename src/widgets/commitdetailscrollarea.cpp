@@ -16,7 +16,6 @@ CommitDetailTextEdit::CommitDetailTextEdit(QWidget *parent) : QPlainTextEdit(par
     QFont font;
     font.setPointSize(10);
     setFont(font);
-    setLineWrapMode(NoWrap);
     setReadOnly(true);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -66,7 +65,8 @@ void CommitDetailTextEdit::resizeEvent(QResizeEvent *event)
 {
     QPlainTextEdit::resizeEvent(event);
     QTextBlock block = firstVisibleBlock();
-    int height = qRound(blockBoundingGeometry(block).height() * (document()->lineCount() + 1));
+    int height = qRound(
+        blockBoundingGeometry(block).height() / block.lineCount() * (document()->lineCount() + 1));
     setFixedHeight(height);
 }
 
