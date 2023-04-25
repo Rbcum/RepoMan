@@ -113,6 +113,9 @@ void PushDialog::updateTargetBranchUI()
     ui->targetBranchBox->clear();
     ui->targetBranchBox->addItems(m_remoteBranches[ui->remoteBox->currentText()]);
     ui->targetBranchBox->setCurrentText(ui->localBranchBox->currentText());
+    if (ui->targetBranchBox->currentText().isEmpty()) {
+        ui->targetBranchBox->setCurrentText(global::manifest.revision);
+    }
 }
 
 void PushDialog::accept()
