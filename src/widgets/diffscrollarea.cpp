@@ -103,7 +103,7 @@ void DiffTextEdit::setDiffHunk(const DiffHunk &hunk)
     for (int i = 0; i < hunk.lines.size(); ++i) {
         const QString &line = hunk.lines.at(i);
         if (line.startsWith("+") || line.startsWith("-")) {
-            appendPlainText(line.mid(1));
+            appendPlainText(QString(line).replace(0, 1, ' '));
         } else {
             appendPlainText(line);
         }
