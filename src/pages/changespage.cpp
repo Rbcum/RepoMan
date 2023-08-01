@@ -139,10 +139,21 @@ void ChangesPage::getChangesAsync(const QString &projectPath, QProgressIndicator
                 if (path.contains(" -> ")) {
                     path = path.split(" -> ").last();
                 }
-                if (mode.startsWith(" ") || mode == "??") {
+                // Untracked
+                if (mode == "??") {
                     result.unstagedList.emplace_back(path, mode);
-                } else {
+                    continue;
+                }
+                // Unmerged
+                if (mode == "AA" || mode == "DD" || mode.contains("U")) {
+                    result.unstagedList.emplace_back(path, mode);
+                    continue;
+                }
+                if (mode[0] != ' ') {
                     result.stagedList.emplace_back(path, mode);
+                }
+                if (mode[1] != ' ') {
+                    result.unstagedList.emplace_back(path, mode);
                 }
             }
             promise.addResult(result);
@@ -161,16 +172,16 @@ void ChangesPage::getChangesAsync(const QString &projectPath, QProgressIndicator
         });
 }
 
-void ChangesPage::getDiffAsync(
-    const QString &projectPath, const GitFile &file, QProgressIndicator *const indicator)
+void ChangesPage::getDiffAsync(const QString &projectPath, const GitFile &file, bool staged,
+    QProgressIndicator *const indicator)
 {
     QString cmd;
     if (file.mode == "??") {
         cmd = QString(R"(git diff -- /dev/null "%1")").arg(file.path);
-    } else if (file.mode.startsWith(" ")) {
-        cmd = QString(R"(git diff -M -- "%1")").arg(file.path);
-    } else {
+    } else if (staged) {
         cmd = QString(R"(git diff -M --cached -- "%1")").arg(file.path);
+    } else {
+        cmd = QString(R"(git diff -M -- "%1")").arg(file.path);
     }
     indicator->startHint();
     m_diffWorker =
@@ -230,7 +241,7 @@ void ChangesPage::onFileSelected()
         ui->stagedTable->clearSelection();
     }
     ui->curFileLabel->setText(file.path);
-    getDiffAsync(m_projectPath, file, m_indicator);
+    getDiffAsync(m_projectPath, file, sender() == ui->stagedTable, m_indicator);
 }
 
 void ChangesPage::onTableButtonClicked()

@@ -61,8 +61,8 @@ private:
     QFuture<DiffResult> m_diffWorker;
     QFuture<QString> m_amendWorker;
     void getChangesAsync(const QString &projectPath, QProgressIndicator *const indicator);
-    void getDiffAsync(
-        const QString &projectPath, const GitFile &file, QProgressIndicator *const indicator);
+    void getDiffAsync(const QString &projectPath, const GitFile &file, bool staged,
+        QProgressIndicator *const indicator);
 
 signals:
     void commitEvent(const HistorySelectionArg &arg = HistorySelectionArg());
