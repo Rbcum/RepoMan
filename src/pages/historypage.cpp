@@ -421,7 +421,7 @@ void HistoryPage::readCommits(QPromise<void> &promise, const QString &projectPat
         if (promise.isCanceled()) {
             return;
         }
-        if (line.startsWith("fatal:")) {
+        if (line.startsWith("fatal:") || line.startsWith("error:")) {
             qDebug() << "readCommits()" << line;
             return;
         }
