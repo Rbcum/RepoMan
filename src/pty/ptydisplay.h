@@ -11,6 +11,7 @@ class PtyDisplay : public QObject
     Q_OBJECT
 public:
     explicit PtyDisplay(QPlainTextEdit *widget, QObject *parent = nullptr);
+    void flushContent();
 
 private:
     QPlainTextEdit *textEdit;

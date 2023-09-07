@@ -42,19 +42,14 @@ set(PROJECT_SOURCES
 )
 
 set(PTY_SOURCES
-        src/pty/kprocess.cpp
+        src/pty/kprocess.cpp src/pty/kprocess.h
+        src/pty/kptydevice.cpp src/pty/kptydevice.h
+        src/pty/kptyprocess.cpp src/pty/kptyprocess.h
+        src/pty/Pty.cpp src/pty/Pty.h
         src/pty/kpty.cpp
-        src/pty/kptydevice.cpp
-        src/pty/kptyprocess.cpp
-        src/pty/Pty.cpp
 
-        src/pty/kprocess.h
-        src/pty/kptydevice.h
-        src/pty/kptyprocess.h
-        src/pty/Pty.h
-
-        src/pty/ptydisplay.h
-        src/pty/ptydisplay.cpp
+        src/pty/ptydisplay.h src/pty/ptydisplay.cpp
+        src/pty/kshell.h src/pty/kshell_unix.cpp
 )
 
 qt_add_executable(RepoMan

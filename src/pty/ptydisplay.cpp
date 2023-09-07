@@ -14,6 +14,11 @@ PtyDisplay::PtyDisplay(QPlainTextEdit *widget, QObject *parent)
     resetTokenizer();
 }
 
+void PtyDisplay::flushContent()
+{
+    onTimer();
+}
+
 void PtyDisplay::onReceiveBlock(const char *buf, int len)
 {
     /* XXX: the following code involves encoding & decoding of "UTF-16
