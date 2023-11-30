@@ -127,7 +127,7 @@ MainWindow::MainWindow(QWidget *parent)
         refresh();
     });
 
-    // Overcome QComboBox default selection during item insertions
+    // Bypass QComboBox default selection behavior during item insertions
     const int projectIndex = QSettings().value(getRepoSettingsKey("projectIndex")).toInt();
 
     // Init
@@ -351,6 +351,9 @@ void MainWindow::refresh(const HistorySelectionArg &arg)
 
 void MainWindow::updateUI()
 {
+    QString cwd = QSettings().value("cwd").toString();
+    setWindowTitle(QString("%1 - %2").arg(cwd, QApplication::applicationName()));
+
     QString targetManifest = QFileInfo(manifest.filePath).symLinkTarget();
     m_statusLabel->setText(
         QString("  %1  |  %2").arg(QFileInfo(targetManifest).fileName(), manifest.revision));
