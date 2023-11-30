@@ -2,7 +2,7 @@
 
 namespace global {
     Manifest manifest;
-    int commitPageSize = 300;
+    int commitPageSize = 100;
 
     QString getRepoSettingsKey(const QString &key)
     {
