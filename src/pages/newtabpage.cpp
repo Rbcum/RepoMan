@@ -2,6 +2,7 @@
 
 #include <QPainter>
 #include <QSortFilterProxyModel>
+#include <QTimer>
 
 #include "ui_newtabpage.h"
 
@@ -20,6 +21,8 @@ NewTabPage::NewTabPage(QWidget *parent) : QWidget(parent), ui(new Ui::NewTabPage
     });
     connect(ui->searchEdit, &QLineEdit::textChanged, filterModel,
         &QSortFilterProxyModel::setFilterFixedString);
+
+    QTimer::singleShot(0, ui->searchEdit, SLOT(setFocus()));
 }
 
 NewTabPage::~NewTabPage()
