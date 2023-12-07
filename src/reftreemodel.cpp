@@ -43,7 +43,9 @@ QModelIndex RefTreeModel::parent(const QModelIndex &index) const
     if (item->type == RefTreeItem::Group) {
         return QModelIndex();
     } else {
-        return createIndex(item->parent->row, 0, item->parent.data());
+        const QSharedPointer<RefTreeItem> parentItem = item->parent.toStrongRef();
+        Q_ASSERT(parentItem);
+        return createIndex(parentItem->row, 0, parentItem.data());
     }
 }
 
@@ -177,7 +179,6 @@ void RefTreeModel::reset()
     }
 }
 
-RefTreeItem::RefTreeItem(QSharedPointer<RefTreeItem> parent)
+RefTreeItem::RefTreeItem(QSharedPointer<RefTreeItem> parent) : parent(parent)
 {
-    this->parent = parent;
 }

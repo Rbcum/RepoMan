@@ -21,7 +21,7 @@ public:
     QString displayName;
     Type type;
     int row;
-    QSharedPointer<RefTreeItem> parent;
+    QWeakPointer<RefTreeItem> parent;
     QList<QSharedPointer<RefTreeItem>> childrens;
 };
 
