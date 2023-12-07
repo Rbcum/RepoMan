@@ -32,13 +32,16 @@ set(PROJECT_SOURCES
         src/dialogs/deleterefdialog.h src/dialogs/deleterefdialog.cpp
         src/pages/changespage.h src/pages/changespage.cpp
         src/pages/historypage.h src/pages/historypage.cpp
+        src/pages/pagehost.h src/pages/pagehost.cpp
         src/pages/historytablemodel.h src/pages/historytablemodel.cpp
         src/pages/historygraphdelegate.h src/pages/historygraphdelegate.cpp
+        src/pages/newtabpage.h src/pages/newtabpage.cpp
         src/widgets/QProgressIndicator.h src/widgets/QProgressIndicator.cpp
         src/widgets/qhistorytableview.h src/widgets/qhistorytableview.cpp
         src/widgets/diffscrollarea.h src/widgets/diffscrollarea.cpp
         src/widgets/commitdetailscrollarea.h src/widgets/commitdetailscrollarea.cpp
         src/widgets/reftreeview.h src/widgets/reftreeview.cpp
+        src/widgets/tabwidgetex.h src/widgets/tabwidgetex.cpp
 )
 
 set(PTY_SOURCES

@@ -10,15 +10,9 @@
 #include "dialogs/resetdialog.h"
 #include "ui_historypage.h"
 
-HistoryPage::HistoryPage(QWidget *parent)
-    : QWidget(parent),
-      ui(new Ui::HistoryPage),
-      m_logThreadPool(new QThreadPool(this)),
-      m_threadPool(new QThreadPool(this))
+HistoryPage::HistoryPage(QWidget *parent, const RepoProject &project)
+    : QWidget(parent), ui(new Ui::HistoryPage), m_project(project)
 {
-    m_threadPool->setMaxThreadCount(1);
-    m_logThreadPool->setMaxThreadCount(1);
-
     ui->setupUi(this);
     ui->splitter->setSizes(QList<int>({300, 300}));
     ui->splitter_2->setSizes(QList<int>({200, 300}));
@@ -52,22 +46,14 @@ HistoryPage::HistoryPage(QWidget *parent)
 
     ui->fileTable->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     connect(ui->fileTable, &QTableWidget::itemSelectionChanged, this, &HistoryPage::onFileSelected);
+
+    m_historyModel->fetchMore(QModelIndex());
 }
 
 HistoryPage::~HistoryPage()
 {
     reset(All);
     delete ui;
-}
-
-void HistoryPage::setCurrentProjectPath(const QString &path)
-{
-    if (m_projectPath == path) {
-        return;
-    }
-    reset(All);
-    this->m_projectPath = path;
-    m_historyModel->fetchMore(QModelIndex());
 }
 
 void HistoryPage::refresh(const HistorySelectionArg &arg)
@@ -177,12 +163,11 @@ void HistoryPage::onCommitSelected(const QModelIndex &current, const QModelIndex
 {
     reset(Detail | Diff);
     const Commit &commit = current.data(HistoryTableModel::CommitRole).value<Commit>();
-    const QString &projectPath = this->m_projectPath;
+    const QString &projectPath = this->m_project.absPath;
 
     m_currentCommit = commit;
     m_indicator->startHint();
-    m_detailWorker = QtConcurrent::run(m_threadPool, [projectPath, commit](
-                                                         QPromise<DetailResult> &promise) {
+    m_detailWorker = QtConcurrent::run([projectPath, commit](QPromise<DetailResult> &promise) {
         DetailResult result;
         result.rawBody =
             global::getCmdResult("git log --format=%B -n1 " + commit.hash, projectPath);
@@ -212,6 +197,7 @@ void HistoryPage::onCommitSelected(const QModelIndex &current, const QModelIndex
         }
         promise.addResult(result);
     });
+    QPointer thisPtr(this);
     m_detailWorker
         .then(this,
             [this](const DetailResult &result) {
@@ -219,15 +205,16 @@ void HistoryPage::onCommitSelected(const QModelIndex &current, const QModelIndex
                 this->m_indicator->stopHint();
                 updateUI(Detail);
             })
-        .onCanceled(this, [this] {
-            this->m_indicator->stopHint();
+        .onCanceled(qApp, [thisPtr] {
+            if (thisPtr.isNull()) return;
+            thisPtr->m_indicator->stopHint();
         });
 }
 
 void HistoryPage::onFileSelected()
 {
     reset(Diff);
-    const QString &projectPath = this->m_projectPath;
+    const QString &projectPath = this->m_project.absPath;
     const Commit &commit = this->m_currentCommit;
     QModelIndexList indexes = ui->fileTable->selectionModel()->selectedIndexes();
     if (indexes.empty()) {
@@ -242,31 +229,31 @@ void HistoryPage::onFileSelected()
         cmd = QString("git diff-tree -M -p --root %1 -- %2").arg(commit.hash, file.path);
     }
     m_indicator->startHint();
-    m_diffWorker =
-        QtConcurrent::run(m_threadPool, [projectPath, cmd](QPromise<DiffResult> &promise) {
-            QString cmdResult = global::getCmdResult(cmd, projectPath);
-            if (promise.isCanceled()) {
-                return;
-            }
-            DiffResult result;
-            result.hunks = global::parseDiffHunks(cmdResult);
-            promise.addResult(result);
-        });
+    m_diffWorker = QtConcurrent::run([projectPath, cmd](QPromise<DiffResult> &promise) {
+        QString cmdResult = global::getCmdResult(cmd, projectPath);
+        if (promise.isCanceled()) {
+            return;
+        }
+        DiffResult result;
+        result.hunks = global::parseDiffHunks(cmdResult);
+        promise.addResult(result);
+    });
+    QPointer thisPtr(this);
     m_diffWorker
-        .then(this,
+        .then(qApp,
             [this](const DiffResult &result) {
                 this->m_indicator->stopHint();
                 this->m_diffResult = result;
                 updateUI(Diff);
             })
-        .onCanceled(this, [this] {
-            this->m_indicator->stopHint();
+        .onCanceled(qApp, [thisPtr] {
+            if (thisPtr.isNull()) return;
+            thisPtr->m_indicator->stopHint();
         });
 }
 
 void HistoryPage::onParentLinkClicked(const QString &hash)
 {
-    qDebug() << "msg";
     HistorySelectionArg arg(HistorySelectionArg::Hash, hash);
     const QModelIndex &index = m_historyModel->searchCommit(arg);
     if (index.isValid()) {
@@ -298,19 +285,19 @@ void HistoryPage::onTableMenuRequested(const QPoint &pos)
 
     QMenu menu;
     menu.addAction("Checkout...", this, [&]() {
-        CheckoutDialog dialog(this, m_projectPath, commit);
+        CheckoutDialog dialog(this, m_project.absPath, commit);
         if (dialog.exec()) {
             emit requestRefreshEvent();
         }
     });
     menu.addAction("Branch...", this, [&]() {
-        BranchCommitDialog dialog(this, m_projectPath, commit);
+        BranchCommitDialog dialog(this, m_project.absPath, commit);
         if (dialog.exec()) {
             emit requestRefreshEvent();
         }
     });
     menu.addAction("Reset...", this, [&]() {
-        ResetDialog dialog(this, m_projectPath, commit);
+        ResetDialog dialog(this, m_project.absPath, commit);
         if (dialog.exec()) {
             emit requestRefreshEvent();
         }
@@ -321,7 +308,7 @@ void HistoryPage::onTableMenuRequested(const QPoint &pos)
 void HistoryPage::onTableDoubleClick(const QModelIndex &index)
 {
     const Commit &commit = index.data(HistoryTableModel::CommitRole).value<Commit>();
-    CheckoutDialog dialog(this, m_projectPath, commit);
+    CheckoutDialog dialog(this, m_project.absPath, commit);
     if (dialog.exec()) {
         emit requestRefreshEvent();
     }
@@ -329,7 +316,7 @@ void HistoryPage::onTableDoubleClick(const QModelIndex &index)
 
 void HistoryPage::onFetchMoreCommits(int skip, const HistorySelectionArg &arg)
 {
-    if (m_projectPath.isEmpty()) {
+    if (m_project.absPath.isEmpty()) {
         return;
     }
     if (arg.isSearchable()) {
@@ -339,7 +326,7 @@ void HistoryPage::onFetchMoreCommits(int skip, const HistorySelectionArg &arg)
     }
 
     LogResult &result = this->m_logResult;
-    QString &path = this->m_projectPath;
+    QString &path = this->m_project.absPath;
     int orderType = ui->orderComboBox->currentIndex();
     int branchType = ui->branchComboBox->currentIndex();
     bool showRemotes = ui->remotesCheckBox->isChecked();
@@ -351,7 +338,7 @@ void HistoryPage::onFetchMoreCommits(int skip, const HistorySelectionArg &arg)
         ui->tableView->setLoading(true);
         ui->tableView->updateLoadingLabel(arg, skip);
     }
-    m_logWorker = QtConcurrent::run(m_logThreadPool, [=](QPromise<void> &promise) mutable {
+    m_logWorker = QtConcurrent::run([=](QPromise<void> &promise) mutable {
         while (true) {
             if (promise.isCanceled()) {
                 break;
@@ -369,7 +356,6 @@ void HistoryPage::onFetchMoreCommits(int skip, const HistorySelectionArg &arg)
             if (promise.isCanceled()) {
                 break;
             }
-
             emit logResult(result, arg, skip + result.commits.size());
 
             if (!arg.isSearchable() || searchHit || result.commits.size() < pageSize) {
@@ -378,8 +364,9 @@ void HistoryPage::onFetchMoreCommits(int skip, const HistorySelectionArg &arg)
             skip += result.commits.size();
         }
     });
+    QPointer thisPtr(this);
     m_logWorker
-        .then(this,
+        .then(qApp,
             [this, arg]() {
                 m_indicator->stopHint();
                 if (arg.isSearchable()) {
@@ -387,10 +374,11 @@ void HistoryPage::onFetchMoreCommits(int skip, const HistorySelectionArg &arg)
                 }
                 selectTargetRow(arg);
             })
-        .onCanceled(this, [this, arg] {
-            this->m_indicator->stopHint();
+        .onCanceled(qApp, [thisPtr, arg] {
+            if (thisPtr.isNull()) return;
+            thisPtr->m_indicator->stopHint();
             if (arg.isSearchable()) {
-                ui->tableView->setLoading(false);
+                thisPtr->ui->tableView->setLoading(false);
             }
         });
 }

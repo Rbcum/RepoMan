@@ -1,5 +1,7 @@
 #include "global.h"
 
+#include <QDir>
+
 namespace global {
     Manifest manifest;
     int commitPageSize = 100;
@@ -12,7 +14,7 @@ namespace global {
 
     int getCmdCode(const QString &cmd, const QString &dir)
     {
-//        qDebug() << "Cmd:" << cmd;
+        //        qDebug() << "Cmd:" << cmd;
         QProcess process;
         process.setWorkingDirectory(dir);
         process.startCommand(cmd, QIODeviceBase::ReadOnly);

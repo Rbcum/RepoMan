@@ -22,10 +22,9 @@ class ChangesPage : public QWidget
     Q_OBJECT
 
 public:
-    ChangesPage(QWidget *parent);
+    ChangesPage(QWidget *parent, const RepoProject &project);
     ~ChangesPage();
 
-    void setCurrentProjectPath(const QString &path);
     void refresh();
     void updateUI(unsigned flags);
     void reset(unsigned flags);
@@ -42,7 +41,7 @@ private:
     Ui::ChangesPage *ui;
     QProgressIndicator *m_indicator;
 
-    QString m_projectPath;
+    RepoProject m_project;
     QList<GitFile> m_stagedList;
     QList<GitFile> m_unstagedList;
     QList<DiffHunk> m_diffHunks;
@@ -56,7 +55,6 @@ private:
     {
         QList<DiffHunk> hunks;
     };
-    QThreadPool *m_threadPool;
     QFuture<ChangesResult> m_changesWorker;
     QFuture<DiffResult> m_diffWorker;
     QFuture<QString> m_amendWorker;

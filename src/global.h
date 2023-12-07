@@ -54,11 +54,13 @@ struct RepoProject
     {
     }
 
-    RepoProject(const QString &name, const QString &path) : name(name), path(path)
+    RepoProject(const QString &name, const QString &path, const QString &absPath)
+        : name(name), path(path), absPath(absPath)
     {
     }
     QString name;
     QString path;
+    QString absPath;
 };
 
 struct Manifest

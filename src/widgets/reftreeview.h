@@ -13,8 +13,8 @@ class RefTreeView : public QTreeView
     Q_OBJECT
 public:
     RefTreeView(QWidget *parent);
-
-    void setCurrentProjectPath(const QString &path);
+    ~RefTreeView();
+    void setProjectPath(const QString &path);
     void refresh();
 
 private slots:
@@ -31,7 +31,6 @@ private:
 
     QString m_projectPath;
 
-    QThreadPool *m_threadPool;
     QFuture<QStringList> m_branchesFetcher;
     QFuture<QStringList> m_remotesFetcher;
     QFuture<QStringList> m_tagsFetcher;

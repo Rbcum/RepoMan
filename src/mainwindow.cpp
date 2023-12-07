@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 
+#include <QAbstractItemView>
 #include <QActionGroup>
 #include <QCompleter>
 #include <QDesktopServices>
@@ -9,30 +10,22 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QSettings>
-#include <QShortcut>
 #include <QStandardPaths>
 #include <QTextCodec>
 #include <QToolButton>
 #include <QtConcurrent>
 
-#include "dialogs/cleandialog.h"
 #include "dialogs/cmddialog.h"
-#include "dialogs/fetchdialog.h"
-#include "dialogs/pulldialog.h"
-#include "dialogs/pushdialog.h"
 #include "dialogs/reposyncdialog.h"
 #include "global.h"
+#include "pages/newtabpage.h"
 #include "ui_mainwindow.h"
 
 using namespace global;
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), m_threadPool(new QThreadPool(this))
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
-    m_threadPool->setMaxThreadCount(1);
-
     ui->setupUi(this);
-    ui->centerSplitter->setStretchFactor(1, 1);
     move(screen()->geometry().center() - frameGeometry().center());
 
     // MenuBar
@@ -46,35 +39,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // ToolBar
     ui->toolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-
-    QFrame *projectFrame = new QFrame(ui->toolBar);
-    QLabel *projectLabel = new QLabel("Project:  ", projectFrame);
-    m_projectListBox = new QComboBox(projectFrame);
-    m_projectListBox->setFixedWidth(300);
-    m_projectListBox->setEditable(true);
-    m_projectListBox->setInsertPolicy(QComboBox::NoInsert);
-    m_projectListBox->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    m_projectListBox->view()->setStyleSheet("QListView::item { height: 24px; }");
-    m_projectListBox->installEventFilter(this);
-    QCompleter *completer = new QCompleter(m_projectListBox);
-    completer->setModel(m_projectListBox->model());
-    completer->setFilterMode(Qt::MatchContains);
-    completer->setCaseSensitivity(Qt::CaseInsensitive);
-    completer->setCompletionMode(QCompleter::PopupCompletion);
-    completer->setMaxVisibleItems(10);
-    completer->popup()->setStyleSheet("QListView::item { height: 24px; }");
-    m_projectListBox->setCompleter(completer);
-    connect(
-        m_projectListBox, &QComboBox::currentIndexChanged, this, &MainWindow::onProjectSelected);
-
-    QHBoxLayout *projectLayout = new QHBoxLayout(projectFrame);
-    projectLayout->setContentsMargins(0, 0, 0, 0);
-    projectLayout->setSpacing(0);
-    projectLayout->addWidget(projectLabel);
-    projectLayout->addWidget(m_projectListBox);
-    ui->toolBar->addWidget(projectFrame);
-
-    ui->toolBar->addSeparator();
     m_actionPush = ui->toolBar->addAction(
         QIcon("://resources/action_push.svg"), "Push", this, &MainWindow::onAction);
     m_actionPull = ui->toolBar->addAction(
@@ -95,50 +59,22 @@ MainWindow::MainWindow(QWidget *parent)
     m_statusLabel->setStyleSheet("QLabel{font-size: 13px;}");
     ui->statusbar->addWidget(m_statusLabel);
 
-    // Mode Buttons
-    connect(ui->changesModeBtn, &QPushButton::toggled, this, &MainWindow::onChangeMode);
-    connect(ui->historyModeBtn, &QPushButton::toggled, this, &MainWindow::onChangeMode);
-
-    // Ref tree
-    connect(ui->refTreeView, &QTreeView::clicked, this, &MainWindow::onRefClicked);
-    connect(ui->refTreeView, &RefTreeView::requestRefreshEvent, this, [&](HistorySelectionArg arg) {
-        refresh(arg);
+    // Tab
+    connect(ui->tabWidget, &TabWidgetEx::tabAddRequested, this, [this] {
+        int newIndex = addTab(RepoProject(), true);
+        ui->tabWidget->setCurrentIndex(newIndex);
     });
-
-    m_changesPage = new ChangesPage(this);
-    m_historyPage = new HistoryPage(this);
-    ui->rightPanel->insertWidget(0, m_changesPage);
-    ui->rightPanel->insertWidget(1, m_historyPage);
-    connect(m_changesPage, &ChangesPage::commitEvent, this, [&](HistorySelectionArg arg) {
-        refresh(arg);
-        ui->historyModeBtn->setChecked(true);
+    connect(ui->tabWidget, &TabWidgetEx::tabCloseRequested, this, [this](int index) {
+        closeTab(index);
+        if (ui->tabWidget->count() == 0) {
+            addTab(RepoProject(), true);
+        }
+        saveTabs();
     });
-    connect(m_changesPage, &ChangesPage::newChangesEvent, this, [&](int count) {
-        QString text = "Changes" + (count ? " (" + QString::number(count) + ")" : "");
-        ui->changesModeBtn->setText(text);
-    });
-    connect(m_historyPage, &HistoryPage::requestRefreshEvent, this, [&]() {
-        refresh();
-    });
-
-    // Shortcuts
-    QShortcut *shortcut = new QShortcut(QKeySequence::Refresh, this);
-    connect(shortcut, &QShortcut::activated, this, [&]() {
-        refresh();
-    });
-
-    // Bypass QComboBox default selection behavior during item insertions
-    const int projectIndex = QSettings().value(getRepoSettingsKey("projectIndex")).toInt();
 
     // Init
     openRepo();
-
-    if (QSettings().value(getRepoSettingsKey("modeIndex")).toInt()) {
-        ui->historyModeBtn->setChecked(true);
-    } else {
-        ui->changesModeBtn->setChecked(true);
-    }
-    m_projectListBox->setCurrentIndex(projectIndex);
+    restoreTabs();
 }
 
 MainWindow::~MainWindow()
@@ -148,22 +84,11 @@ MainWindow::~MainWindow()
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
-    if (watched == m_projectListBox) {
-        if (event->type() == QEvent::FocusIn) {
-            QTimer::singleShot(0, this, [this]() {
-                m_projectListBox->lineEdit()->selectAll();
-            });
-        } else if (event->type() == QEvent::FocusOut) {
-            QString currentProject = m_projectListBox->currentData(Qt::DisplayRole).toString();
-            m_projectListBox->setCurrentText(currentProject);
-        }
-    }
     return QMainWindow::eventFilter(watched, event);
 }
 
 void MainWindow::onAction()
 {
-    QString path = getProjectFullPath(m_projectListBox->currentData().value<RepoProject>());
     QAction *action = qobject_cast<QAction *>(sender());
     if (action == ui->actionFile_Open) {
         onActionOpen();
@@ -181,64 +106,99 @@ void MainWindow::onAction()
     } else if (action == ui->actionHelp_About) {
         QMessageBox::about(this, "RepoMan", "Repo GUI front-end");
     } else if (action == m_actionPush) {
-        PushDialog dialog(this, path);
-        if (dialog.exec()) {
-            refresh();
-        }
+        onProjectAction(&PageHost::onActionPush);
     } else if (action == m_actionPull) {
-        PullDialog dialog(this, path);
-        if (dialog.exec()) {
-            refresh();
-        }
+        onProjectAction(&PageHost::onActionPull);
     } else if (action == m_actionFetch) {
-        FetchDialog dialog(this, path);
-        if (dialog.exec()) {
-            refresh();
-        }
+        onProjectAction(&PageHost::onActionFetch);
     } else if (action == m_actionClean) {
-        CleanDialog dialog(this, path);
-        if (dialog.exec()) {
-            refresh();
-        }
+        onProjectAction(&PageHost::onActionClean);
     } else if (action == m_actionTerm) {
-        QProcess p;
-        p.setProgram("/usr/bin/x-terminal-emulator");
-        p.setWorkingDirectory(path);
-        p.startDetached();
+        onProjectAction(&PageHost::onActionTerm);
     } else if (action == m_actionFolder) {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+        onProjectAction(&PageHost::onActionFolder);
     }
 }
 
-// void MainWindow::onProjectFilter(const QString &pattern)
-//{
-//     QList<QAction *> actions = m_ui->projectSearchEdit->actions();
-//     if (!pattern.isEmpty()) {
-//         if (actions.isEmpty()) {
-//             QAction *action = m_ui->projectSearchEdit->addAction(
-//                 style()->standardIcon(QStyle::SP_LineEditClearButton),
-//                 QLineEdit::TrailingPosition);
-//             connect(action, &QAction::triggered, this, [&]() {
-//                 m_ui->projectSearchEdit->clear();
-//             });
-//         }
-//         m_ui->projectListView->selectionModel()->clear();
-//     } else {
-//         if (actions.size() > 0) {
-//             m_ui->projectSearchEdit->removeAction(actions.first());
-//         }
-//     }
-// }
-
-void MainWindow::onRefClicked(const QModelIndex &index)
+void MainWindow::onProjectAction(void (PageHost::*func)())
 {
-    if (!index.isValid()) {
-        return;
+    int index = ui->tabWidget->currentIndex();
+    auto data = ui->tabWidget->tabData(index).value<TabData>();
+    if (!data.isNewTab) {
+        (static_cast<PageHost *>(data.page)->*func)();
     }
-    RefTreeItem *item = static_cast<RefTreeItem *>(index.internalPointer());
-    if (item->type >= RefTreeItem::Branch) {
-        ui->historyModeBtn->setChecked(true);
-        m_historyPage->jumpToRef(item);
+}
+
+int MainWindow::addTab(const RepoProject &project, bool isNewTab, int index)
+{
+    QString title;
+    TabData data;
+    data.isNewTab = isNewTab;
+    data.project = project;
+    if (isNewTab) {
+        title = "New tab";
+        auto page = new NewTabPage();
+        data.page = page;
+        connect(page, &NewTabPage::projectDoubleClicked, this, &MainWindow::openProject);
+    } else {
+        title = project.path;
+        data.page = new PageHost(project);
+    }
+    int newIndex;
+    if (index != -1) {
+        newIndex = ui->tabWidget->insertTab(index, data.page, title);
+    } else {
+        newIndex = ui->tabWidget->addTab(data.page, title);
+    }
+    ui->tabWidget->setTabData(newIndex, QVariant::fromValue(data));
+    return newIndex;
+}
+
+void MainWindow::closeTab(int index)
+{
+    auto data = ui->tabWidget->tabData(index).value<TabData>();
+    ui->tabWidget->removeTab(index);
+    data.page->deleteLater();
+}
+
+void MainWindow::openProject(const RepoProject &project)
+{
+    int index = 0;
+    int count = ui->tabWidget->count();
+    for (int i = 0; i < count; ++i) {
+        auto data = ui->tabWidget->tabData(i).value<TabData>();
+        if (data.page == sender()) {
+            index = i;
+            break;
+        }
+    }
+    addTab(project, false, index + 1);
+    closeTab(index);
+    saveTabs();
+}
+
+void MainWindow::saveTabs()
+{
+    QString value;
+    int count = ui->tabWidget->count();
+    for (int i = 0; i < count; ++i) {
+        auto data = ui->tabWidget->tabData(i).value<TabData>();
+        if (data.isNewTab) continue;
+        value.append(data.project.path);
+        if (i < count - 1) value.append(";");
+    }
+    QSettings().setValue(getRepoSettingsKey("tabs"), value);
+}
+
+void MainWindow::restoreTabs()
+{
+    QString value = QSettings().value(getRepoSettingsKey("tabs")).toString();
+    if (value.isEmpty()) {
+        addTab(RepoProject(), true);
+    } else {
+        for (const QString &path : value.split(";")) {
+            addTab(manifest.projectMap.value(path));
+        }
     }
 }
 
@@ -313,42 +273,6 @@ void MainWindow::openRepo()
     updateUI();
 }
 
-void MainWindow::onChangeMode()
-{
-    QPushButton *btn = static_cast<QPushButton *>(sender());
-    if (!btn->isChecked()) return;
-
-    ui->rightPanel->setCurrentWidget(
-        btn == ui->changesModeBtn ? m_changesPage : (QWidget *)m_historyPage);
-
-    QSettings().setValue(getRepoSettingsKey("modeIndex"), ui->rightPanel->currentIndex());
-
-    QString projectPath = getProjectFullPath(m_projectListBox->currentData().value<RepoProject>());
-    if (btn == ui->changesModeBtn) {
-        m_changesPage->setCurrentProjectPath(projectPath);
-    } else {
-        m_historyPage->setCurrentProjectPath(projectPath);
-    }
-}
-
-void MainWindow::onProjectSelected()
-{
-    QSettings().setValue(getRepoSettingsKey("projectIndex"), m_projectListBox->currentIndex());
-    QString projectPath = getProjectFullPath(m_projectListBox->currentData().value<RepoProject>());
-    m_changesPage->setCurrentProjectPath(projectPath);
-    if (ui->rightPanel->currentWidget() == m_historyPage) {
-        m_historyPage->setCurrentProjectPath(projectPath);
-    }
-    ui->refTreeView->setCurrentProjectPath(projectPath);
-}
-
-void MainWindow::refresh(const HistorySelectionArg &arg)
-{
-    ui->refTreeView->refresh();
-    m_changesPage->refresh();
-    m_historyPage->refresh(arg);
-}
-
 void MainWindow::updateUI()
 {
     QString cwd = QSettings().value("cwd").toString();
@@ -357,21 +281,6 @@ void MainWindow::updateUI()
     QString targetManifest = QFileInfo(manifest.filePath).symLinkTarget();
     m_statusLabel->setText(
         QString("  %1  |  %2").arg(QFileInfo(targetManifest).fileName(), manifest.revision));
-
-    m_projectListBox->clear();
-    for (int i = 0; i < manifest.projectList.size(); ++i) {
-        const RepoProject &project = manifest.projectList[i];
-        QString path = project.path.isEmpty() ? project.name : project.path;
-        m_projectListBox->addItem(path, QVariant::fromValue(project));
-        m_projectListBox->setItemData(i, path, Qt::ToolTipRole);
-    }
-}
-
-QString MainWindow::getProjectFullPath(const RepoProject &project)
-{
-    QString path = project.path.isEmpty() ? project.name : project.path;
-    QString cwd = QSettings().value("cwd").toString();
-    return QDir::cleanPath(cwd + "/" + path);
 }
 
 void MainWindow::parseManifest(const QString &manPath)
@@ -388,11 +297,11 @@ void MainWindow::parseManifest(const QString &manPath)
     manifest = {};
     manifest.filePath = manPath;
 
+    const QString &cwd = QSettings().value("cwd").toString();
     QDomNode n = doc.documentElement().firstChild();
     while (!n.isNull()) {
         QDomElement e = n.toElement();
         if (e.nodeName() == "include") {
-            QString cwd = QSettings().value("cwd").toString();
             QString manPath2 = QDir::cleanPath(cwd + "/.repo/manifests/" + e.attribute("name"));
             parseManifest(manPath2);
         } else if (e.nodeName() == "default") {
@@ -402,14 +311,15 @@ void MainWindow::parseManifest(const QString &manPath)
         } else if (e.nodeName() == "project") {
             QString name = e.attribute("name");
             QString path = e.attribute("path");
-            manifest.projectList.emplace_back(name, path);
-            manifest.projectMap.insert(path, RepoProject(name, path));
+            if (path.isEmpty()) path = name;
+            QString absPath = QDir::cleanPath(cwd + "/" + path);
+            manifest.projectList.emplace_back(name, path, absPath);
+            manifest.projectMap.insert(path, RepoProject(name, path, absPath));
         }
         n = n.nextSibling();
     }
     std::sort(manifest.projectList.begin(), manifest.projectList.end(),
         [](const RepoProject &p1, const RepoProject &p2) {
-            return (p1.path.isEmpty() ? p1.name : p1.path) <
-                   (p2.path.isEmpty() ? p2.name : p2.path);
+            return p1.path < p2.path;
         });
 }

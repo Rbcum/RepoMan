@@ -11,12 +11,8 @@
 #include "global.h"
 
 RefTreeView::RefTreeView(QWidget *parent)
-    : QTreeView(parent),
-      m_threadPool(new QThreadPool(this)),
-      m_remotesLoaded(false),
-      m_tagsLoaded(false)
+    : QTreeView(parent), m_remotesLoaded(false), m_tagsLoaded(false)
 {
-    m_threadPool->setMaxThreadCount(1);
     m_model = new RefTreeModel(this);
     m_delegate = new RefTreeDelegate(this, this);
 
@@ -31,11 +27,15 @@ RefTreeView::RefTreeView(QWidget *parent)
     expand(m_model->index(RefTreeItem::Branch, 0));
 }
 
-void RefTreeView::setCurrentProjectPath(const QString &path)
+RefTreeView::~RefTreeView()
 {
-    if (m_projectPath == path) {
-        return;
-    }
+    m_branchesFetcher.cancel();
+    m_remotesFetcher.cancel();
+    m_tagsFetcher.cancel();
+}
+
+void RefTreeView::setProjectPath(const QString &path)
+{
     m_projectPath = path;
     m_remotesLoaded = false;
     m_tagsLoaded = false;
@@ -132,27 +132,27 @@ void RefTreeView::onMenuRequested(const QPoint &pos)
 void RefTreeView::getBranchesAsync(const QString &projectPath)
 {
     m_delegate->setBranchesLoading(true);
-    m_branchesFetcher =
-        QtConcurrent::run(m_threadPool, [projectPath](QPromise<QStringList> &promise) {
-            QStringList result;
-            QString currentBranch;
-            QStringList lines = global::getCmdResult("git branch", projectPath).split('\n');
-            if (promise.isCanceled()) {
-                return;
-            }
-            for (const QString &line : lines) {
-                QString trLine = line.trimmed();
-                if (trLine.size() > 0 && !trLine.startsWith("* (HEAD detached")) {
-                    if (trLine.startsWith("*")) {
-                        trLine = trLine.mid(2);
-                        currentBranch = trLine;
-                    }
-                    result << trLine;
+    m_branchesFetcher = QtConcurrent::run([projectPath](QPromise<QStringList> &promise) {
+        QStringList result;
+        QString currentBranch;
+        QStringList lines = global::getCmdResult("git branch", projectPath).split('\n');
+        if (promise.isCanceled()) {
+            return;
+        }
+        for (const QString &line : lines) {
+            QString trLine = line.trimmed();
+            if (trLine.size() > 0 && !trLine.startsWith("* (HEAD detached")) {
+                if (trLine.startsWith("*")) {
+                    trLine = trLine.mid(2);
+                    currentBranch = trLine;
                 }
+                result << trLine;
             }
-            result << currentBranch;
-            promise.addResult(result);
-        });
+        }
+        result << currentBranch;
+        promise.addResult(result);
+    });
+    QPointer thisPtr(this);
     m_branchesFetcher
         .then(this,
             [this](const QStringList &result) {
@@ -160,71 +160,74 @@ void RefTreeView::getBranchesAsync(const QString &projectPath)
                 m_delegate->setCurrentBranch(result.last());
                 m_model->addRefData(result.mid(0, result.size() - 1), RefTreeItem::Branch);
             })
-        .onCanceled(this, [this] {
-            m_delegate->setBranchesLoading(false);
+        .onCanceled(qApp, [thisPtr] {
+            if (thisPtr.isNull()) return;
+            thisPtr->m_delegate->setBranchesLoading(false);
         });
 }
 
 void RefTreeView::getRemotesAsync(const QString &projectPath)
 {
     m_delegate->setRemotesLoading(true);
-    m_branchesFetcher =
-        QtConcurrent::run(m_threadPool, [projectPath](QPromise<QStringList> &promise) {
-            QStringList result;
-            QStringList lines = global::getCmdResult("git branch -r", projectPath).split('\n');
-            if (promise.isCanceled()) {
-                return;
+    m_remotesFetcher = QtConcurrent::run([projectPath](QPromise<QStringList> &promise) {
+        QStringList result;
+        QStringList lines = global::getCmdResult("git branch -r", projectPath).split('\n');
+        if (promise.isCanceled()) {
+            return;
+        }
+        for (const QString &line : lines) {
+            QString trLine = line.trimmed();
+            if (trLine.contains(" -> ")) {
+                trLine = trLine.split(" -> ").last();
             }
-            for (const QString &line : lines) {
-                QString trLine = line.trimmed();
-                if (trLine.contains(" -> ")) {
-                    trLine = trLine.split(" -> ").last();
-                }
-                if (trLine.size() > 0) {
-                    result << trLine;
-                }
+            if (trLine.size() > 0) {
+                result << trLine;
             }
-            promise.addResult(result);
-        });
-    m_branchesFetcher
+        }
+        promise.addResult(result);
+    });
+    QPointer thisPtr(this);
+    m_remotesFetcher
         .then(this,
             [this](const QStringList &result) {
                 m_remotesLoaded = true;
                 m_delegate->setRemotesLoading(false);
                 m_model->addRefData(result, RefTreeItem::Remote);
             })
-        .onCanceled(this, [this] {
-            m_delegate->setRemotesLoading(false);
+        .onCanceled(qApp, [thisPtr] {
+            if (thisPtr.isNull()) return;
+            thisPtr->m_delegate->setBranchesLoading(false);
         });
 }
 
 void RefTreeView::getTagsAsync(const QString &projectPath)
 {
     m_delegate->setTagsLoading(true);
-    m_branchesFetcher =
-        QtConcurrent::run(m_threadPool, [projectPath](QPromise<QStringList> &promise) {
-            QStringList result;
-            QStringList lines = global::getCmdResult("git tag", projectPath).split('\n');
-            if (promise.isCanceled()) {
-                return;
+    m_tagsFetcher = QtConcurrent::run([projectPath](QPromise<QStringList> &promise) {
+        QStringList result;
+        QStringList lines = global::getCmdResult("git tag", projectPath).split('\n');
+        if (promise.isCanceled()) {
+            return;
+        }
+        for (const QString &line : lines) {
+            QString trLine = line.trimmed();
+            if (trLine.size() > 0) {
+                result << trLine;
             }
-            for (const QString &line : lines) {
-                QString trLine = line.trimmed();
-                if (trLine.size() > 0) {
-                    result << trLine;
-                }
-            }
-            promise.addResult(result);
-        });
-    m_branchesFetcher
+        }
+        promise.addResult(result);
+    });
+    QPointer thisPtr(this);
+    m_tagsFetcher
         .then(this,
             [this](const QStringList &result) {
                 m_tagsLoaded = true;
                 m_delegate->setTagsLoading(false);
                 m_model->addRefData(result, RefTreeItem::Tag);
             })
-        .onCanceled(this, [this] {
-            m_delegate->setTagsLoading(false);
+        .onCanceled(qApp, [thisPtr] {
+            if (thisPtr.isNull()) return;
+            thisPtr->m_delegate->setBranchesLoading(false);
         });
 }
 

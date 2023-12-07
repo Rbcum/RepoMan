@@ -1,15 +1,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QComboBox>
 #include <QLabel>
-#include <QLineEdit>
 #include <QMainWindow>
-#include <QProgressBar>
-#include <QSortFilterProxyModel>
+#include <QThreadPool>
 
-#include "pages/changespage.h"
-#include "pages/historypage.h"
+#include "global.h"
+#include "pages/pagehost.h"
+#include "widgets/QProgressIndicator.h"
 
 namespace Ui {
     class MainWindow;
@@ -23,14 +21,18 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     bool eventFilter(QObject *watched, QEvent *event) override;
-    //    void keyReleaseEvent(QKeyEvent *event) override;
+
+    struct TabData
+    {
+        RepoProject project;
+        QWidget *page;
+        bool isNewTab = false;
+    };
 
 private slots:
     void onAction();
-    void onRefClicked(const QModelIndex &index);
-    void onChangeMode();
-    void onProjectSelected();
-    void refresh(const HistorySelectionArg &arg = HistorySelectionArg());
+    void closeTab(int index);
+    void openProject(const RepoProject &project);
 
 private:
     Ui::MainWindow *ui;
@@ -42,23 +44,20 @@ private:
     QAction *m_actionClean;
     QAction *m_actionTerm;
     QAction *m_actionFolder;
-    QComboBox *m_projectListBox;
     QProgressIndicator *m_indicator;
     QLabel *m_statusLabel;
-
-    ChangesPage *m_changesPage;
-    HistoryPage *m_historyPage;
 
     void onActionSwitchManifest();
     void onActionOpen();
     void onActionRepoStart();
+    void onProjectAction(void (PageHost::*func)());
 
     void openRepo();
     void parseManifest(const QString &manPath);
     void updateUI();
-    QString getProjectFullPath(const RepoProject &project);
-
-    QThreadPool *m_threadPool;
+    int addTab(const RepoProject &project, bool isNewTab = false, int index = -1);
+    void saveTabs();
+    void restoreTabs();
 };
 
 #endif  // MAINWINDOW_H

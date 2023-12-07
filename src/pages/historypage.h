@@ -32,10 +32,9 @@ private:
     };
 
 public:
-    HistoryPage(QWidget *parent);
+    HistoryPage(QWidget *parent, const RepoProject &project);
     ~HistoryPage();
 
-    void setCurrentProjectPath(const QString &path);
     void refresh(const HistorySelectionArg &arg = HistorySelectionArg());
     void updateUI(unsigned flags);
     void reset(unsigned flags);
@@ -68,7 +67,7 @@ private:
         QList<DiffHunk> hunks;
     };
 
-    QString m_projectPath;
+    RepoProject m_project;
     Commit m_currentCommit;
     LogResult m_logResult;
     DetailResult m_detailResult;
@@ -76,8 +75,6 @@ private:
 
     void selectTargetRow(const HistorySelectionArg &arg);
 
-    QThreadPool *m_logThreadPool;
-    QThreadPool *m_threadPool;
     QFuture<void> m_logWorker;
     QFuture<DetailResult> m_detailWorker;
     QFuture<DiffResult> m_diffWorker;

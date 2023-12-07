@@ -7,10 +7,9 @@
 #include "dialogs/cmddialog.h"
 #include "ui_changespage.h"
 
-ChangesPage::ChangesPage(QWidget *parent)
-    : QWidget(parent), ui(new Ui::ChangesPage), m_threadPool(new QThreadPool(this))
+ChangesPage::ChangesPage(QWidget *parent, const RepoProject &project)
+    : QWidget(parent), ui(new Ui::ChangesPage), m_project(project)
 {
-    m_threadPool->setMaxThreadCount(1);
     ui->setupUi(this);
     ui->bottomSplitter->setSizes(QList<int>({1000, 100}));
     ui->centerSplitter->setSizes(QList<int>({100, 300}));
@@ -32,27 +31,20 @@ ChangesPage::ChangesPage(QWidget *parent)
 
     connect(ui->amendCheckBox, &QCheckBox::toggled, this, &ChangesPage::onAmendToggled);
     connect(ui->commitButton, &QPushButton::clicked, this, &ChangesPage::onCommit);
+
+    getChangesAsync(m_project.absPath, m_indicator);
 }
 
 ChangesPage::~ChangesPage()
 {
-    delete ui;
-}
-
-void ChangesPage::setCurrentProjectPath(const QString &path)
-{
-    if (m_projectPath == path) {
-        return;
-    }
     reset(All);
-    this->m_projectPath = path;
-    getChangesAsync(path, m_indicator);
+    delete ui;
 }
 
 void ChangesPage::refresh()
 {
     reset(List | Diff);
-    getChangesAsync(m_projectPath, m_indicator);
+    getChangesAsync(m_project.absPath, m_indicator);
 }
 
 void ChangesPage::updateUI(unsigned flags)
@@ -119,45 +111,45 @@ void ChangesPage::getChangesAsync(const QString &projectPath, QProgressIndicator
         return;
     }
     indicator->startHint();
-    m_changesWorker =
-        QtConcurrent::run(m_threadPool, [projectPath](QPromise<ChangesResult> &promise) {
-            QString cmdResult =
-                global::getCmdResult("git status --porcelain --untracked-files=all", projectPath);
-            if (promise.isCanceled()) {
-                return;
+    m_changesWorker = QtConcurrent::run([projectPath](QPromise<ChangesResult> &promise) {
+        QString cmdResult =
+            global::getCmdResult("git status --porcelain --untracked-files=all", projectPath);
+        if (promise.isCanceled()) {
+            return;
+        }
+        QStringList lines = cmdResult.split('\n');
+        ChangesResult result;
+        for (int i = 0; i < lines.size(); ++i) {
+            QString line = lines[i];
+            if (line.isEmpty()) {
+                continue;
             }
-            QStringList lines = cmdResult.split('\n');
-            ChangesResult result;
-            for (int i = 0; i < lines.size(); ++i) {
-                QString line = lines[i];
-                if (line.isEmpty()) {
-                    continue;
-                }
-                QString mode = line.sliced(0, 2);
-                QString path = line.sliced(3);
+            QString mode = line.sliced(0, 2);
+            QString path = line.sliced(3);
 
-                if (path.contains(" -> ")) {
-                    path = path.split(" -> ").last();
-                }
-                // Untracked
-                if (mode == "??") {
-                    result.unstagedList.emplace_back(path, mode);
-                    continue;
-                }
-                // Unmerged
-                if (mode == "AA" || mode == "DD" || mode.contains("U")) {
-                    result.unstagedList.emplace_back(path, mode);
-                    continue;
-                }
-                if (mode[0] != ' ') {
-                    result.stagedList.emplace_back(path, mode);
-                }
-                if (mode[1] != ' ') {
-                    result.unstagedList.emplace_back(path, mode);
-                }
+            if (path.contains(" -> ")) {
+                path = path.split(" -> ").last();
             }
-            promise.addResult(result);
-        });
+            // Untracked
+            if (mode == "??") {
+                result.unstagedList.emplace_back(path, mode);
+                continue;
+            }
+            // Unmerged
+            if (mode == "AA" || mode == "DD" || mode.contains("U")) {
+                result.unstagedList.emplace_back(path, mode);
+                continue;
+            }
+            if (mode[0] != ' ') {
+                result.stagedList.emplace_back(path, mode);
+            }
+            if (mode[1] != ' ') {
+                result.unstagedList.emplace_back(path, mode);
+            }
+        }
+        promise.addResult(result);
+    });
+    QPointer thisPtr(this);
     m_changesWorker
         .then(this,
             [this](const ChangesResult &result) {
@@ -167,8 +159,9 @@ void ChangesPage::getChangesAsync(const QString &projectPath, QProgressIndicator
                 updateUI(List);
                 emit newChangesEvent(m_stagedList.size() + m_unstagedList.size());
             })
-        .onCanceled(this, [this] {
-            this->m_indicator->stopHint();
+        .onCanceled(qApp, [thisPtr] {
+            if (thisPtr.isNull()) return;
+            thisPtr->m_indicator->stopHint();
         });
 }
 
@@ -184,18 +177,18 @@ void ChangesPage::getDiffAsync(const QString &projectPath, const GitFile &file, 
         cmd = QString(R"(git diff -M -- "%1")").arg(file.path);
     }
     indicator->startHint();
-    m_diffWorker =
-        QtConcurrent::run(m_threadPool, [projectPath, cmd](QPromise<DiffResult> &promise) {
-            QString cmdResult = global::getCmdResult(cmd, projectPath);
-            if (promise.isCanceled()) {
-                return;
-            }
+    m_diffWorker = QtConcurrent::run([projectPath, cmd](QPromise<DiffResult> &promise) {
+        QString cmdResult = global::getCmdResult(cmd, projectPath);
+        if (promise.isCanceled()) {
+            return;
+        }
 
-            DiffResult result;
-            result.hunks = global::parseDiffHunks(cmdResult);
+        DiffResult result;
+        result.hunks = global::parseDiffHunks(cmdResult);
 
-            promise.addResult(result);
-        });
+        promise.addResult(result);
+    });
+    QPointer thisPtr(this);
     m_diffWorker
         .then(this,
             [this](const DiffResult &result) {
@@ -203,8 +196,9 @@ void ChangesPage::getDiffAsync(const QString &projectPath, const GitFile &file, 
                 this->m_diffHunks = result.hunks;
                 updateUI(Diff);
             })
-        .onCanceled(this, [this] {
-            this->m_indicator->stopHint();
+        .onCanceled(qApp, [thisPtr] {
+            if (thisPtr.isNull()) return;
+            thisPtr->m_indicator->stopHint();
         });
 }
 
@@ -219,10 +213,10 @@ void ChangesPage::onFileDoubleClicked(int row, int column)
         cmd = "git add " + file.path;
     }
 
-    CmdDialog dialog(this, cmd, m_projectPath, true);
+    CmdDialog dialog(this, cmd, m_project.absPath, true);
     dialog.exec();
     reset(List | Diff);
-    getChangesAsync(m_projectPath, m_indicator);
+    getChangesAsync(m_project.absPath, m_indicator);
 }
 
 void ChangesPage::onFileSelected()
@@ -241,7 +235,7 @@ void ChangesPage::onFileSelected()
         ui->stagedTable->clearSelection();
     }
     ui->curFileLabel->setText(file.path);
-    getDiffAsync(m_projectPath, file, sender() == ui->stagedTable, m_indicator);
+    getDiffAsync(m_project.absPath, file, sender() == ui->stagedTable, m_indicator);
 }
 
 void ChangesPage::onTableButtonClicked()
@@ -253,21 +247,22 @@ void ChangesPage::onTableButtonClicked()
         cmd = "git reset";
     }
 
-    CmdDialog dialog(this, cmd, m_projectPath, true);
+    CmdDialog dialog(this, cmd, m_project.absPath, true);
     dialog.exec();
     reset(List | Diff);
-    getChangesAsync(m_projectPath, m_indicator);
+    getChangesAsync(m_project.absPath, m_indicator);
 }
 
 void ChangesPage::onAmendToggled(bool checked)
 {
     if (checked) {
-        const QString &projectPath = m_projectPath;
+        const QString &projectPath = m_project.absPath;
         m_indicator->startHint();
         m_amendWorker.cancel();
-        m_amendWorker = QtConcurrent::run(m_threadPool, [projectPath]() {
+        m_amendWorker = QtConcurrent::run([projectPath]() {
             return global::getCmdResult("git log -n1 --format=%B", projectPath);
         });
+        QPointer thisPtr(this);
         m_amendWorker
             .then(this,
                 [&](QString body) {
@@ -275,8 +270,9 @@ void ChangesPage::onAmendToggled(bool checked)
                     ui->commitTextEdit->clear();
                     ui->commitTextEdit->insertPlainText(body.trimmed());
                 })
-            .onCanceled(this, [&] {
-                this->m_indicator->stopHint();
+            .onCanceled(qApp, [thisPtr] {
+                if (thisPtr.isNull()) return;
+                thisPtr->m_indicator->stopHint();
             });
     }
 }
@@ -289,7 +285,7 @@ void ChangesPage::onCommit()
     }
     QString cmd = QString("git commit%1 -m \"%2\"")
                       .arg(ui->amendCheckBox->isChecked() ? " --amend --no-edit" : "", msg);
-    CmdDialog dialog(this, cmd, m_projectPath, true);
+    CmdDialog dialog(this, cmd, m_project.absPath, true);
     int code = dialog.exec();
     if (code == 0) {
         reset(All);

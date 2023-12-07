@@ -15,194 +15,63 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_8">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
-     <widget class="QSplitter" name="centerSplitter">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+     <widget class="TabWidgetEx" name="tabWidget">
+      <property name="styleSheet">
+       <string notr="true">QTabBar::tab {
+    min-width: 20ex;
+}
+
+QTabBar::close-button {
+    image: url(:/resources/icon_close.svg);
+    padding: 2px;
+    subcontrol-position: right;
+}
+
+QTabBar::close-button:hover {
+    background-color: #DDD;
+}
+
+QTabBar::close-button:pressed {
+    background-color: #CCC;
+}</string>
       </property>
-      <property name="childrenCollapsible">
-       <bool>false</bool>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
       </property>
-      <widget class="QWidget" name="verticalLayoutWidget_2">
-       <layout class="QVBoxLayout" name="verticalLayout_2">
-        <item>
-         <layout class="QVBoxLayout" name="modeLayout">
-          <property name="spacing">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QPushButton" name="changesModeBtn">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>36</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>-1</pointsize>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton{
-	border:none;
-	outline: none;
-	text-align: left;
-	padding-left: 14px;
-	font-size: 14px;
-}
-QPushButton:checked{
-	background:LightGray;
-}</string>
-            </property>
-            <property name="text">
-             <string>Changes</string>
-            </property>
-            <property name="icon">
-             <iconset resource="resources.qrc">
-              <normaloff>:/resources/action_changes.svg</normaloff>:/resources/action_changes.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="checked">
-             <bool>false</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-            <property name="flat">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="historyModeBtn">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>36</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>-1</pointsize>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton{
-	border:none;
-	outline: none;
-	text-align: left;
-	padding-left: 14px;
-	font-size: 14px;
-}
-QPushButton:checked{
-	background:LightGray;
-}</string>
-            </property>
-            <property name="text">
-             <string>History</string>
-            </property>
-            <property name="icon">
-             <iconset resource="resources.qrc">
-              <normaloff>:/resources/action_history.svg</normaloff>:/resources/action_history.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="Line" name="line">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="RefTreeView" name="refTreeView">
-          <property name="contextMenuPolicy">
-           <enum>Qt::CustomContextMenu</enum>
-          </property>
-          <property name="autoFillBackground">
-           <bool>false</bool>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QTreeView {
-		background-color: #EFEFEF;
-}
-QTreeView::item { 
-	height: 28px;
-}
-QTreeView::item:focus {
-	border:none;
-}
-QTreeView::item:selected {
-	background: LightGray;
-}
-QTreeView::branch:selected {
-    background: LightGray;
-}</string>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Sunken</enum>
-          </property>
-          <property name="editTriggers">
-           <set>QAbstractItemView::NoEditTriggers</set>
-          </property>
-          <property name="indentation">
-           <number>10</number>
-          </property>
-          <attribute name="headerVisible">
-           <bool>false</bool>
-          </attribute>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="verticalLayoutWidget_3">
-       <layout class="QVBoxLayout" name="verticalLayout_5">
-        <item>
-         <widget class="QStackedWidget" name="rightPanel">
-          <property name="styleSheet">
-           <string notr="true"/>
-          </property>
-          <property name="currentIndex">
-           <number>1</number>
-          </property>
-          <widget class="QWidget" name="page">
-           <property name="styleSheet">
-            <string notr="true"/>
-           </property>
-          </widget>
-          <widget class="QWidget" name="page_2"/>
-         </widget>
-        </item>
-       </layout>
-      </widget>
+      <property name="currentIndex">
+       <number>-1</number>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>16</width>
+        <height>16</height>
+       </size>
+      </property>
+      <property name="elideMode">
+       <enum>Qt::ElideLeft</enum>
+      </property>
+      <property name="documentMode">
+       <bool>true</bool>
+      </property>
+      <property name="tabsClosable">
+       <bool>true</bool>
+      </property>
+      <property name="movable">
+       <bool>true</bool>
+      </property>
      </widget>
     </item>
    </layout>
@@ -300,13 +169,12 @@ QTreeView::branch:selected {
  </widget>
  <customwidgets>
   <customwidget>
-   <class>RefTreeView</class>
-   <extends>QTreeView</extends>
-   <header>widgets/reftreeview.h</header>
+   <class>TabWidgetEx</class>
+   <extends>QTabWidget</extends>
+   <header>widgets/tabwidgetex.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

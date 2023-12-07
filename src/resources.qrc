@@ -14,5 +14,7 @@
         <file>resources/icon_tag.svg</file>
         <file>resources/icon_branch.svg</file>
         <file>resources/icon_cloud.svg</file>
+        <file>resources/icon_close.svg</file>
+        <file>resources/icon_add.svg</file>
     </qresource>
 </RCC>
