@@ -154,7 +154,7 @@ void RefTreeView::getBranchesAsync(const QString &projectPath)
     });
     QPointer thisPtr(this);
     m_branchesFetcher
-        .then(this,
+        .then(qApp,
             [this](const QStringList &result) {
                 m_delegate->setBranchesLoading(false);
                 m_delegate->setCurrentBranch(result.last());
@@ -188,7 +188,7 @@ void RefTreeView::getRemotesAsync(const QString &projectPath)
     });
     QPointer thisPtr(this);
     m_remotesFetcher
-        .then(this,
+        .then(qApp,
             [this](const QStringList &result) {
                 m_remotesLoaded = true;
                 m_delegate->setRemotesLoading(false);
@@ -219,7 +219,7 @@ void RefTreeView::getTagsAsync(const QString &projectPath)
     });
     QPointer thisPtr(this);
     m_tagsFetcher
-        .then(this,
+        .then(qApp,
             [this](const QStringList &result) {
                 m_tagsLoaded = true;
                 m_delegate->setTagsLoading(false);

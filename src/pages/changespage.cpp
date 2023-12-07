@@ -151,7 +151,7 @@ void ChangesPage::getChangesAsync(const QString &projectPath, QProgressIndicator
     });
     QPointer thisPtr(this);
     m_changesWorker
-        .then(this,
+        .then(qApp,
             [this](const ChangesResult &result) {
                 this->m_indicator->stopHint();
                 this->m_unstagedList = result.unstagedList;
@@ -190,7 +190,7 @@ void ChangesPage::getDiffAsync(const QString &projectPath, const GitFile &file, 
     });
     QPointer thisPtr(this);
     m_diffWorker
-        .then(this,
+        .then(qApp,
             [this](const DiffResult &result) {
                 this->m_indicator->stopHint();
                 this->m_diffHunks = result.hunks;
@@ -264,7 +264,7 @@ void ChangesPage::onAmendToggled(bool checked)
         });
         QPointer thisPtr(this);
         m_amendWorker
-            .then(this,
+            .then(qApp,
                 [&](QString body) {
                     m_indicator->stopHint();
                     ui->commitTextEdit->clear();

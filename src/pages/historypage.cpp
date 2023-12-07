@@ -199,7 +199,7 @@ void HistoryPage::onCommitSelected(const QModelIndex &current, const QModelIndex
     });
     QPointer thisPtr(this);
     m_detailWorker
-        .then(this,
+        .then(qApp,
             [this](const DetailResult &result) {
                 this->m_detailResult = result;
                 this->m_indicator->stopHint();
