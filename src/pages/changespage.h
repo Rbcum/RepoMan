@@ -53,6 +53,7 @@ private:
     {
         QList<GitFile> unstagedList;
         QList<GitFile> stagedList;
+        int fileCount = 0;
     };
     struct DiffResult
     {

@@ -131,6 +131,8 @@ void ChangesPage::getChangesAsync(const QString &projectPath, QProgressIndicator
             if (line.isEmpty()) {
                 continue;
             }
+            result.fileCount++;
+
             QString mode = line.sliced(0, 2);
             QString path = line.sliced(3);
 
@@ -164,7 +166,7 @@ void ChangesPage::getChangesAsync(const QString &projectPath, QProgressIndicator
                 this->m_unstagedList = result.unstagedList;
                 this->m_stagedList = result.stagedList;
                 updateUI(List);
-                emit newChangesEvent(m_stagedList.size() + m_unstagedList.size());
+                emit newChangesEvent(result.fileCount);
             })
         .onCanceled(qApp, [thisPtr] {
             if (thisPtr.isNull()) return;
