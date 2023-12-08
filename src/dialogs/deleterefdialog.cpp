@@ -25,8 +25,8 @@ void DeleteLocalBranchDialog::accept()
 {
     QString cmd =
         QString("git branch %1 %2").arg(ui->forceCheckBox->isChecked() ? "-D" : "-d", m_branch);
-    CmdDialog dialog(parentWidget(), cmd, m_projectPath, true);
-    done(dialog.exec() == 0 ? QDialog::Accepted : QDialog::Rejected);
+    int code = CmdDialog::execute(parentWidget(), cmd, m_projectPath, true);
+    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }
 
 DeleteRemoteBranchDialog::DeleteRemoteBranchDialog(
@@ -48,8 +48,8 @@ DeleteRemoteBranchDialog::~DeleteRemoteBranchDialog()
 void DeleteRemoteBranchDialog::accept()
 {
     QString cmd = QString("git push origin :%1").arg(m_branch);
-    CmdDialog dialog(parentWidget(), cmd, m_projectPath, true);
-    done(dialog.exec() == 0 ? QDialog::Accepted : QDialog::Rejected);
+    int code = CmdDialog::execute(parentWidget(), cmd, m_projectPath, true);
+    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }
 
 DeleteTagDialog::DeleteTagDialog(QWidget *parent, const QString &projectPath, const QString &tag)
@@ -67,6 +67,6 @@ DeleteTagDialog::~DeleteTagDialog()
 void DeleteTagDialog::accept()
 {
     QString cmd = QString("git tag -d %1").arg(m_tag);
-    CmdDialog dialog(parentWidget(), cmd, m_projectPath, true);
-    done(dialog.exec() == 0 ? QDialog::Accepted : QDialog::Rejected);
+    int code = CmdDialog::execute(parentWidget(), cmd, m_projectPath, true);
+    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }

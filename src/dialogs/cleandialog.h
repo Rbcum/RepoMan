@@ -20,23 +20,12 @@ public:
 
 private:
     Ui::CleanDialog *ui;
+    QProgressIndicator *m_indicator;
+
     QString m_projectPath;
 
 public slots:
     void accept() override;
-};
-class CleanConfirmDialog : public QDialog
-{
-    Q_OBJECT
-
-public:
-    explicit CleanConfirmDialog(QWidget *parent, const QString &projectPath, const QString &cmd);
-    ~CleanConfirmDialog();
-
-private:
-    Ui::CleanConfirmDialog *ui;
-    QProgressIndicator *m_indicator;
-    QString m_projectPath;
 };
 
 #endif  // CLEANDIALOG_H

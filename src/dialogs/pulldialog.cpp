@@ -75,6 +75,6 @@ void PullDialog::accept()
     QString cmd = QString("git pull%1 %2 %3")
                       .arg(ui->rebaseCB->isChecked() ? " --rebase" : "",
                           ui->remoteBox->currentText(), ui->branchBox->currentText());
-    CmdDialog dialog(parentWidget(), cmd, m_projectPath);
-    done(dialog.exec() == 0 ? QDialog::Accepted : QDialog::Rejected);
+    int code = CmdDialog::execute(parentWidget(), cmd, m_projectPath);
+    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }

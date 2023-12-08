@@ -39,8 +39,8 @@ void BranchRemoteDialog::accept()
 {
     QString cmd =
         QString("git checkout -b %1 --track %2").arg(ui->branchNameEdit->text(), m_remoteBranch);
-    CmdDialog dialog(parentWidget(), cmd, m_projectPath, true);
-    done(dialog.exec() == 0 ? QDialog::Accepted : QDialog::Rejected);
+    int code = CmdDialog::execute(parentWidget(), cmd, m_projectPath, true);
+    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }
 
 BranchCommitDialog::BranchCommitDialog(
@@ -58,10 +58,11 @@ BranchCommitDialog::~BranchCommitDialog()
 
 void BranchCommitDialog::accept()
 {
-    QString cmd = QString("git branch %1 %2").arg(ui->branchNameEdit->text(), m_commit.hash);
+    QStringList cmds;
+    cmds << QString("git branch %1 %2").arg(ui->branchNameEdit->text(), m_commit.hash);
     if (ui->checkoutBox->isChecked()) {
-        cmd += " && git checkout " + ui->branchNameEdit->text();
+        cmds << "git checkout " + ui->branchNameEdit->text();
     }
-    CmdDialog dialog(parentWidget(), cmd, m_projectPath, true);
-    done(dialog.exec() == 0 ? QDialog::Accepted : QDialog::Rejected);
+    int code = CmdDialog::execute(parentWidget(), cmds, m_projectPath, true);
+    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }

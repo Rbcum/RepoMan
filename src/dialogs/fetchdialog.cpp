@@ -33,6 +33,6 @@ void FetchDialog::accept()
         QString("git fetch%1%2 %3")
             .arg(ui->pruneCB->isChecked() ? " --prune" : "",
                 ui->tagsCB->isChecked() ? " --tags" : "", ui->remoteComboBox->currentText());
-    CmdDialog dialog(parentWidget(), cmd, m_projectPath);
-    done(dialog.exec() == 0 ? QDialog::Accepted : QDialog::Rejected);
+    int code = CmdDialog::execute(parentWidget(), cmd, m_projectPath);
+    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }

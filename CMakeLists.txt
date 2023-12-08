@@ -30,6 +30,7 @@ set(PROJECT_SOURCES
         src/dialogs/pulldialog.h src/dialogs/pulldialog.cpp
         src/dialogs/cleandialog.h src/dialogs/cleandialog.cpp
         src/dialogs/deleterefdialog.h src/dialogs/deleterefdialog.cpp
+        src/dialogs/warningfilelistdialog.h src/dialogs/warningfilelistdialog.cpp
         src/pages/changespage.h src/pages/changespage.cpp
         src/pages/historypage.h src/pages/historypage.cpp
         src/pages/pagehost.h src/pages/pagehost.cpp
@@ -59,7 +60,7 @@ qt_add_executable(RepoMan
     MANUAL_FINALIZATION
     ${PROJECT_SOURCES}
     ${PTY_SOURCES}
-)
+   )
 
 target_include_directories(RepoMan
     PRIVATE

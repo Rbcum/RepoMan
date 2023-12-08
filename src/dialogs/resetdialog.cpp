@@ -67,6 +67,6 @@ void ResetDialog::accept()
         modeArg = "--hard";
     }
     QString cmd = QString("git reset %1 %2").arg(modeArg, m_commit.hash);
-    CmdDialog dialog(parentWidget(), cmd, m_projectPath, true);
-    done(dialog.exec() == 0 ? QDialog::Accepted : QDialog::Rejected);
+    int code = CmdDialog::execute(parentWidget(), cmd, m_projectPath, true);
+    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }

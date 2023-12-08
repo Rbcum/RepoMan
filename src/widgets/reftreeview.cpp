@@ -87,8 +87,7 @@ void RefTreeView::onDoubleClicked(const QModelIndex &index)
     RefTreeItem *item = static_cast<RefTreeItem *>(index.internalPointer());
     if (item->type == RefTreeItem::Branch) {
         QString cmd = QString("git checkout %1").arg(item->data);
-        CmdDialog dialog(parentWidget(), cmd, m_projectPath, true);
-        if (dialog.exec() == 0) {
+        if (CmdDialog::execute(this, cmd, m_projectPath, true) == 0) {
             HistorySelectionArg arg(HistorySelectionArg::Head, item->data);
             emit requestRefreshEvent(arg);
         }
@@ -100,8 +99,7 @@ void RefTreeView::onDoubleClicked(const QModelIndex &index)
         }
     } else if (item->type == RefTreeItem::Tag) {
         QString cmd = QString("git checkout %1").arg(item->data);
-        CmdDialog dialog(parentWidget(), cmd, m_projectPath, true);
-        if (dialog.exec() == 0) {
+        if (CmdDialog::execute(this, cmd, m_projectPath, true) == 0) {
             HistorySelectionArg arg(HistorySelectionArg::Tag, item->data);
             emit requestRefreshEvent(arg);
         }

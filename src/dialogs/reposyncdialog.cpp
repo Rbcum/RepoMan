@@ -28,6 +28,6 @@ void RepoSyncDialog::accept()
                 ui->pruneCB->isChecked() ? " --prune" : "",
                 ui->verboseBox->isChecked() ? " -v" : "");
     QString cwd = QSettings().value("cwd").toString();
-    CmdDialog dialog(parentWidget(), cmd, cwd);
-    done(dialog.exec() == 0 ? QDialog::Accepted : QDialog::Rejected);
+    int code = CmdDialog::execute(parentWidget(), cmd, cwd);
+    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }

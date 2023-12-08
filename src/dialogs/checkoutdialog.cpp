@@ -18,6 +18,6 @@ CheckoutDialog::~CheckoutDialog()
 void CheckoutDialog::accept()
 {
     QString cmd = QString("git checkout %1").arg(m_commit.hash);
-    CmdDialog dialog(parentWidget(), cmd, m_projectPath, true);
-    done(dialog.exec() == 0 ? QDialog::Accepted : QDialog::Rejected);
+    int code = CmdDialog::execute(parentWidget(), cmd, m_projectPath, true);
+    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }

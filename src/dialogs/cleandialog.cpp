@@ -5,13 +5,14 @@
 
 #include "cmddialog.h"
 #include "global.h"
-#include "ui_cleanconfirmdialog.h"
 #include "ui_cleandialog.h"
+#include "warningfilelistdialog.h"
 
 CleanDialog::CleanDialog(QWidget *parent, const QString &projectPath)
     : QDialog(parent), ui(new Ui::CleanDialog), m_projectPath(projectPath)
 {
     ui->setupUi(this);
+    m_indicator = new QProgressIndicator(this);
 }
 
 CleanDialog::~CleanDialog()
@@ -21,25 +22,13 @@ CleanDialog::~CleanDialog()
 
 void CleanDialog::accept()
 {
+    QString projectPath = m_projectPath;
     QString cmd = QString("git clean -f%1%2")
                       .arg(ui->dirCheckBox->isChecked() ? "d" : "",
                           ui->ignorecheckBox->isChecked() ? "x" : "");
-    CleanConfirmDialog confirmDialog(this, m_projectPath, cmd);
-    if (confirmDialog.exec()) {
-        CmdDialog dialog(parentWidget(), cmd, m_projectPath);
-        done(dialog.exec() == 0 ? QDialog::Accepted : QDialog::Rejected);
-    }
-}
-
-CleanConfirmDialog::CleanConfirmDialog(
-    QWidget *parent, const QString &projectPath, const QString &cmd)
-    : QDialog(parent), ui(new Ui::CleanConfirmDialog), m_projectPath(projectPath)
-{
-    ui->setupUi(this);
-    m_indicator = new QProgressIndicator(this);
-
     setEnabled(false);
     m_indicator->startHint();
+
     QtConcurrent::run([projectPath, cmd]() {
         QStringList fileList;
         QStringList lines = global::getCmdResult(cmd + "n", projectPath).split('\n');
@@ -50,17 +39,13 @@ CleanConfirmDialog::CleanConfirmDialog(
             }
         }
         return fileList;
-    }).then(this, [this](QStringList fileList) {
-        for (const QString &f : fileList) {
-            ui->filesTextEdit->appendPlainText(f);
-        }
-        ui->filesTextEdit->verticalScrollBar()->setValue(0);
+    }).then(this, [this, cmd](QStringList fileList) {
         setEnabled(true);
         m_indicator->stopHint();
+        if (WarningFileListDialog::confirm(this, "Confirm Remove",
+                "The following files will be removed permernantly!!!", fileList)) {
+            int code = CmdDialog::execute(parentWidget(), cmd, m_projectPath, true);
+            done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
+        }
     });
-}
-
-CleanConfirmDialog::~CleanConfirmDialog()
-{
-    delete ui;
 }

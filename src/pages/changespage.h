@@ -30,6 +30,9 @@ public:
     void updateUI(unsigned flags);
     void reset(unsigned flags);
 
+protected:
+    void showEvent(QShowEvent *event) override;
+
 private:
     enum UiFlags
     {
@@ -65,22 +68,22 @@ private:
     void getChangesAsync(const QString &projectPath, QProgressIndicator *const indicator);
     void getDiffAsync(const QString &projectPath, const GitFile &file, bool staged,
         QProgressIndicator *const indicator);
-    void updateGitIndex(QObject *stageSender);
+    void batchFilesAction(bool updateIndex, const QStringList &updateIndexCmds,
+        const QStringList &updateWorkingTreeCmds, bool reverse = false);
 
 signals:
     void commitEvent(const HistorySelectionArg &arg = HistorySelectionArg());
     void newChangesEvent(int count);
 
 private slots:
+    void onFileListMenuRequested(const QPoint &pos);
     void onFileDoubleClicked(int row, int column);
     void onFileSelected(QTableWidgetItem *current, QTableWidgetItem *previous);
     void onTableButtonClicked();
     void onAmendToggled(bool checked);
     void onCommit();
-
-    // QWidget interface
-protected:
-    void showEvent(QShowEvent *event) override;
+    // void onActionDiscard();
+    // void onAction();
 };
 
 #endif  // COMMITPAGE_H

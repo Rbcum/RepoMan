@@ -1,10 +1,15 @@
 #include "changespage.h"
 
+#include <QClipboard>
+#include <QDesktopServices>
+#include <QFileDialog>
+#include <QMenu>
 #include <QProgressBar>
 #include <QShortcut>
 #include <QtConcurrent>
 
 #include "dialogs/cmddialog.h"
+#include "dialogs/warningfilelistdialog.h"
 #include "ui_changespage.h"
 
 ChangesPage::ChangesPage(QWidget *parent, const RepoProject &project)
@@ -20,12 +25,16 @@ ChangesPage::ChangesPage(QWidget *parent, const RepoProject &project)
         &ChangesPage::onFileDoubleClicked);
     connect(
         ui->unstagedTable, &QTableWidget::currentItemChanged, this, &ChangesPage::onFileSelected);
+    connect(ui->unstagedTable, &QTableWidget::customContextMenuRequested, this,
+        &ChangesPage::onFileListMenuRequested);
     connect(ui->unstageBtn, &QPushButton::clicked, this, &ChangesPage::onTableButtonClicked);
 
     ui->stagedTable->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     connect(
         ui->stagedTable, &QTableWidget::cellDoubleClicked, this, &ChangesPage::onFileDoubleClicked);
     connect(ui->stagedTable, &QTableWidget::currentItemChanged, this, &ChangesPage::onFileSelected);
+    connect(ui->stagedTable, &QTableWidget::customContextMenuRequested, this,
+        &ChangesPage::onFileListMenuRequested);
     connect(ui->stageBtn, &QPushButton::clicked, this, &ChangesPage::onTableButtonClicked);
 
     connect(ui->amendCheckBox, &QCheckBox::toggled, this, &ChangesPage::onAmendToggled);
@@ -38,6 +47,11 @@ ChangesPage::~ChangesPage()
 {
     reset(All);
     delete ui;
+}
+
+void ChangesPage::showEvent(QShowEvent *event)
+{
+    refresh();
 }
 
 void ChangesPage::refresh()
@@ -210,33 +224,116 @@ void ChangesPage::getDiffAsync(const QString &projectPath, const GitFile &file, 
         });
 }
 
-void ChangesPage::updateGitIndex(QObject *stageSender)
+void ChangesPage::onFileListMenuRequested(const QPoint &pos)
 {
-    const QList<GitFile> &fileList = sender() == stageSender ? m_unstagedList : m_stagedList;
-    const QModelIndexList &indexes = sender() == stageSender
-                                         ? ui->unstagedTable->selectionModel()->selectedIndexes()
-                                         : ui->stagedTable->selectionModel()->selectedIndexes();
-    if (indexes.isEmpty()) return;
-
-    QString cmd = sender() == stageSender ? "git add " : "git reset -- ";
-    for (const QModelIndex &index : indexes) {
-        cmd.append(" ").append(fileList.at(index.row()).path);
+    auto sourceTable = qobject_cast<QTableWidget *>(sender());
+    const QModelIndex &index = sourceTable->indexAt(pos);
+    if (!index.isValid()) return;
+    QList<GitFile> &fileList = sourceTable == ui->stagedTable ? m_stagedList : m_unstagedList;
+    const GitFile &file = fileList.at(index.row());
+    const QString &absPath = QDir::cleanPath(m_project.absPath + "/" + file.path);
+    const QModelIndexList &selectedRows = sourceTable->selectionModel()->selectedRows();
+    QStringList selectedFiles;
+    for (const QModelIndex &index : selectedRows) {
+        selectedFiles << fileList.at(index.row()).path;
     }
 
-    CmdDialog dialog(this, cmd, m_project.absPath, true);
-    dialog.exec();
-    reset(List | Diff);
-    getChangesAsync(m_project.absPath, m_indicator);
+    QMenu menu;
+    menu.addAction("Open", this,
+            [&]() {
+                QDesktopServices::openUrl(QUrl::fromLocalFile(absPath));
+            })
+        ->setEnabled(selectedRows.size() == 1);
+    menu.addAction("Open Containing Folder", this, [&]() {
+        QDir dir = QFileInfo(absPath).absoluteDir();
+        QDesktopServices::openUrl(QUrl::fromLocalFile(dir.path()));
+    });
+    menu.addAction("Copy Absolute Path", this,
+            [&]() {
+                QGuiApplication::clipboard()->setText(absPath);
+            })
+        ->setEnabled(selectedRows.size() == 1);
+    menu.addSeparator();
+    menu.addAction("Discard", this, [&]() {
+        if (WarningFileListDialog::confirm(this, "Confirm Discard",
+                "Changes in the following files will be discarded, THIS CANNOT BE UNDONE",
+                selectedFiles)) {
+            batchFilesAction(sourceTable == ui->stagedTable,
+                QStringList() << "git reset --"
+                              << "git checkout --",
+                QStringList() << "git checkout --", true);
+        }
+    });
+
+    bool enableRemove = true;
+    for (auto &index : selectedRows) {
+        if (fileList.at(index.row()).mode.contains("D")) {
+            enableRemove = false;
+            break;
+        }
+    }
+    menu.addAction("Remove", this,
+            [&]() {
+                if (WarningFileListDialog::confirm(this, "Confirm Remove",
+                        "The following files will be removed, THIS CANNOT BE UNDONE if file is not "
+                        "tracked by git",
+                        selectedFiles)) {
+                    batchFilesAction(sourceTable == ui->stagedTable,
+                        QStringList() << "git reset --"
+                                      << "rm",
+                        QStringList() << "rm", true);
+                }
+            })
+        ->setEnabled(enableRemove);
+    menu.addSeparator();
+    menu.addAction(sourceTable == ui->stagedTable ? "Unstage" : "Stage", this, [&]() {
+        batchFilesAction(sourceTable == ui->unstagedTable, {"git add --"}, {"git reset --"});
+    });
+    menu.addAction(sourceTable == ui->stagedTable ? "Unstage All" : "Stage All", this, [&]() {
+        QString cmd = sourceTable == ui->stagedTable ? "git reset" : "git add .";
+        CmdDialog::execute(this, cmd, m_project.absPath, true);
+        reset(List | Diff);
+        getChangesAsync(m_project.absPath, m_indicator);
+    });
+    menu.exec(sourceTable->mapToGlobal(pos));
 }
 
 void ChangesPage::onFileDoubleClicked(int row, int column)
 {
-    updateGitIndex(ui->unstagedTable);
+    batchFilesAction(sender() == ui->unstagedTable, {"git add --"}, {"git reset --"});
 }
 
 void ChangesPage::onTableButtonClicked()
 {
-    updateGitIndex(ui->stageBtn);
+    batchFilesAction(sender() == ui->stageBtn, {"git add --"}, {"git reset --"});
+}
+
+void ChangesPage::batchFilesAction(bool updateIndex, const QStringList &updateIndexCmds,
+    const QStringList &updateWorkingTreeCmds, bool reverse)
+{
+    const QList<GitFile> &fileList = updateIndex ? (reverse ? m_stagedList : m_unstagedList)
+                                                 : (reverse ? m_unstagedList : m_stagedList);
+    const QModelIndexList &indexes =
+        updateIndex ? (reverse ? ui->stagedTable->selectionModel()->selectedRows()
+                               : ui->unstagedTable->selectionModel()->selectedRows())
+                    : (reverse ? ui->unstagedTable->selectionModel()->selectedRows()
+                               : ui->stagedTable->selectionModel()->selectedRows());
+
+    if (indexes.isEmpty()) return;
+
+    const QStringList &cmds = updateIndex ? updateIndexCmds : updateWorkingTreeCmds;
+    QStringList fullCmds;
+    for (auto &c : cmds) {
+        QString fullCmd = c;
+        for (const QModelIndex &index : indexes) {
+            fullCmd.append(" ").append(fileList.at(index.row()).path);
+        }
+        fullCmds << fullCmd;
+    }
+
+    CmdDialog::execute(this, fullCmds, m_project.absPath, true);
+    reset(List | Diff);
+    getChangesAsync(m_project.absPath, m_indicator);
 }
 
 void ChangesPage::onFileSelected(QTableWidgetItem *current, QTableWidgetItem *previous)
@@ -258,6 +355,7 @@ void ChangesPage::onFileSelected(QTableWidgetItem *current, QTableWidgetItem *pr
     ui->curFileLabel->setText(file.path);
     getDiffAsync(m_project.absPath, file, sender() == ui->stagedTable, m_indicator);
 }
+
 void ChangesPage::onAmendToggled(bool checked)
 {
     if (checked) {
@@ -290,15 +388,8 @@ void ChangesPage::onCommit()
     }
     QString cmd = QString("git commit%1 -m \"%2\"")
                       .arg(ui->amendCheckBox->isChecked() ? " --amend --no-edit" : "", msg);
-    CmdDialog dialog(this, cmd, m_project.absPath, true);
-    int code = dialog.exec();
-    if (code == 0) {
+    if (CmdDialog::execute(this, cmd, m_project.absPath, true) == 0) {
         reset(All);
         emit commitEvent(HistorySelectionArg(HistorySelectionArg::First));
     }
-}
-
-void ChangesPage::showEvent(QShowEvent *event)
-{
-    refresh();
 }

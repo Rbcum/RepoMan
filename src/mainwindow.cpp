@@ -218,8 +218,7 @@ void MainWindow::onActionSwitchManifest()
     }
     QString arg = path.remove(0, manifestDir.length() + 1);
     QString cmd = QString("repo init -m %1").arg(arg);
-    CmdDialog dialog(this, cmd, cwd);
-    if (dialog.exec() == 0) {
+    if (CmdDialog::execute(this, cmd, cwd) == 0) {
         openRepo();
     }
 }
@@ -240,8 +239,7 @@ void MainWindow::onActionRepoStart()
         if (!branch.isEmpty()) {
             QString cmd = QString("repo start --all %1").arg(branch);
             QString cwd = QSettings().value("cwd").toString();
-            CmdDialog dialog(this, cmd, cwd);
-            dialog.exec();
+            CmdDialog::execute(this, cmd, cwd);
         }
     }
 }

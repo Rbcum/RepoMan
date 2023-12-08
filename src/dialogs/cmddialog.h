@@ -16,19 +16,23 @@ class CmdDialog : public QDialog
 
 public:
     explicit CmdDialog(
-        QWidget *parent, const QString &cmd, const QString &cwd, bool autoClose = false);
+        QWidget *parent, const QStringList &cmdList, const QString &cwd, bool autoClose = false);
     ~CmdDialog();
+    static int execute(
+        QWidget *parent, const QString &cmd, const QString &cwd, bool autoClose = false);
+    static int execute(
+        QWidget *parent, const QStringList &cmdList, const QString &cwd, bool autoClose = false);
 
 private:
     Ui::CmdDialog *ui;
     Konsole::Pty *m_pty;
     PtyDisplay *m_display;
-    QString m_cmd;
-    bool m_firstBlockReceived;
+    QStringList m_cmdList;
+    int m_nextCmdIndex;
     bool m_autoClose;
-
     int m_exitCode;
 
+    void processNextCmd();
     void onFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
     // QDialog interface

@@ -126,6 +126,6 @@ void PushDialog::accept()
     QString cmd = QString("git push %1 HEAD:%2%3")
                       .arg(ui->urlTextEdit->toPlainText(),
                           ui->refForCheckBox->isChecked() ? "refs/for/" : "", targetBranch);
-    CmdDialog dialog(parentWidget(), cmd, m_projectPath);
-    done(dialog.exec() == 0 ? QDialog::Accepted : QDialog::Rejected);
+    int code = CmdDialog::execute(parentWidget(), cmd, m_projectPath);
+    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }
