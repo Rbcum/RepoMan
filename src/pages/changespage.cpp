@@ -19,15 +19,14 @@ ChangesPage::ChangesPage(QWidget *parent, const RepoProject &project)
     connect(ui->unstagedTable, &QTableWidget::cellDoubleClicked, this,
         &ChangesPage::onFileDoubleClicked);
     connect(
-        ui->unstagedTable, &QTableWidget::itemSelectionChanged, this, &ChangesPage::onFileSelected);
-    connect(ui->unstageAllBtn, &QPushButton::clicked, this, &ChangesPage::onTableButtonClicked);
+        ui->unstagedTable, &QTableWidget::currentItemChanged, this, &ChangesPage::onFileSelected);
+    connect(ui->unstageBtn, &QPushButton::clicked, this, &ChangesPage::onTableButtonClicked);
 
     ui->stagedTable->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     connect(
         ui->stagedTable, &QTableWidget::cellDoubleClicked, this, &ChangesPage::onFileDoubleClicked);
-    connect(
-        ui->stagedTable, &QTableWidget::itemSelectionChanged, this, &ChangesPage::onFileSelected);
-    connect(ui->stageAllBtn, &QPushButton::clicked, this, &ChangesPage::onTableButtonClicked);
+    connect(ui->stagedTable, &QTableWidget::currentItemChanged, this, &ChangesPage::onFileSelected);
+    connect(ui->stageBtn, &QPushButton::clicked, this, &ChangesPage::onTableButtonClicked);
 
     connect(ui->amendCheckBox, &QCheckBox::toggled, this, &ChangesPage::onAmendToggled);
     connect(ui->commitButton, &QPushButton::clicked, this, &ChangesPage::onCommit);
@@ -50,7 +49,10 @@ void ChangesPage::refresh()
 void ChangesPage::updateUI(unsigned flags)
 {
     if (flags & List) {
-        for (int i = 0; i < m_unstagedList.size(); ++i) {
+        const int stagedSize = m_stagedList.size();
+        const int unstagedSize = m_unstagedList.size();
+
+        for (int i = 0; i < unstagedSize; ++i) {
             GitFile f = m_unstagedList.at(i);
             ui->unstagedTable->insertRow(i);
             QTableWidgetItem *modeItem = new QTableWidgetItem(f.mode);
@@ -60,8 +62,7 @@ void ChangesPage::updateUI(unsigned flags)
             fileItem->setToolTip(f.path);
             ui->unstagedTable->setItem(i, 1, fileItem);
         }
-
-        for (int i = 0; i < m_stagedList.size(); ++i) {
+        for (int i = 0; i < stagedSize; ++i) {
             GitFile f = m_stagedList.at(i);
             ui->stagedTable->insertRow(i);
             QTableWidgetItem *modeItem = new QTableWidgetItem(f.mode);
@@ -72,11 +73,17 @@ void ChangesPage::updateUI(unsigned flags)
             ui->stagedTable->setItem(i, 1, fileItem);
         }
 
-        //    if (ui->unstagedTable->rowCount() > 0) {
-        //        ui->unstagedTable->selectRow(0);
-        //    } else if (ui->stagedTable->rowCount() > 0) {
-        //        ui->stagedTable->selectRow(0);
-        //    }
+        m_stagedSelection = qMin(stagedSize - 1, m_stagedSelection);
+        m_unstagedSelection = qMin(unstagedSize - 1, m_unstagedSelection);
+        if (m_stagedSelection >= 0) {
+            ui->stagedTable->selectRow(m_stagedSelection);
+        } else if (m_unstagedSelection >= 0) {
+            ui->unstagedTable->selectRow(m_unstagedSelection);
+        } else if (ui->stagedTable->rowCount() > 0) {
+            ui->stagedTable->selectRow(0);
+        } else if (ui->unstagedTable->rowCount() > 0) {
+            ui->unstagedTable->selectRow(0);
+        }
     }
     if (flags & Diff) {
         ui->diffScrollArea->setDiffHunks(m_diffHunks);
@@ -185,7 +192,6 @@ void ChangesPage::getDiffAsync(const QString &projectPath, const GitFile &file, 
 
         DiffResult result;
         result.hunks = global::parseDiffHunks(cmdResult);
-
         promise.addResult(result);
     });
     QPointer thisPtr(this);
@@ -202,15 +208,17 @@ void ChangesPage::getDiffAsync(const QString &projectPath, const GitFile &file, 
         });
 }
 
-void ChangesPage::onFileDoubleClicked(int row, int column)
+void ChangesPage::updateGitIndex(QObject *stageSender)
 {
-    QString cmd;
-    if (sender() == ui->stagedTable) {
-        GitFile file = m_stagedList.at(row);
-        cmd = "git reset -- " + file.path;
-    } else {
-        GitFile file = m_unstagedList.at(row);
-        cmd = "git add " + file.path;
+    const QList<GitFile> &fileList = sender() == stageSender ? m_unstagedList : m_stagedList;
+    const QModelIndexList &indexes = sender() == stageSender
+                                         ? ui->unstagedTable->selectionModel()->selectedIndexes()
+                                         : ui->stagedTable->selectionModel()->selectedIndexes();
+    if (indexes.isEmpty()) return;
+
+    QString cmd = sender() == stageSender ? "git add " : "git reset -- ";
+    for (const QModelIndex &index : indexes) {
+        cmd.append(" ").append(fileList.at(index.row()).path);
     }
 
     CmdDialog dialog(this, cmd, m_project.absPath, true);
@@ -219,40 +227,35 @@ void ChangesPage::onFileDoubleClicked(int row, int column)
     getChangesAsync(m_project.absPath, m_indicator);
 }
 
-void ChangesPage::onFileSelected()
+void ChangesPage::onFileDoubleClicked(int row, int column)
 {
-    QTableWidget *table = qobject_cast<QTableWidget *>(sender());
-    QModelIndexList indexes = table->selectionModel()->selectedIndexes();
-    if (indexes.empty()) {
-        return;
-    }
-    GitFile file;
-    if (sender() == ui->stagedTable) {
-        file = m_stagedList.at(indexes.first().row());
-        ui->unstagedTable->clearSelection();
-    } else {
-        file = m_unstagedList.at(indexes.first().row());
-        ui->stagedTable->clearSelection();
-    }
-    ui->curFileLabel->setText(file.path);
-    getDiffAsync(m_project.absPath, file, sender() == ui->stagedTable, m_indicator);
+    updateGitIndex(ui->unstagedTable);
 }
 
 void ChangesPage::onTableButtonClicked()
 {
-    QString cmd;
-    if (sender() == ui->stageAllBtn) {
-        cmd = "git add .";
-    } else {
-        cmd = "git reset";
-    }
-
-    CmdDialog dialog(this, cmd, m_project.absPath, true);
-    dialog.exec();
-    reset(List | Diff);
-    getChangesAsync(m_project.absPath, m_indicator);
+    updateGitIndex(ui->stageBtn);
 }
 
+void ChangesPage::onFileSelected(QTableWidgetItem *current, QTableWidgetItem *previous)
+{
+    if (!current) return;
+
+    GitFile file;
+    if (sender() == ui->stagedTable) {
+        file = m_stagedList.at(current->row());
+        ui->unstagedTable->setCurrentItem(nullptr);
+        m_stagedSelection = current->row();
+        m_unstagedSelection = -1;
+    } else {
+        file = m_unstagedList.at(current->row());
+        ui->stagedTable->setCurrentItem(nullptr);
+        m_stagedSelection = -1;
+        m_unstagedSelection = current->row();
+    }
+    ui->curFileLabel->setText(file.path);
+    getDiffAsync(m_project.absPath, file, sender() == ui->stagedTable, m_indicator);
+}
 void ChangesPage::onAmendToggled(bool checked)
 {
     if (checked) {

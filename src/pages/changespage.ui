@@ -58,12 +58,12 @@
            <item>
             <widget class="QLabel" name="label_2">
              <property name="text">
-              <string>Staged files</string>
+              <string>Staged</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="unstageAllBtn">
+            <widget class="QPushButton" name="unstageBtn">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -72,12 +72,12 @@
              </property>
              <property name="minimumSize">
               <size>
-               <width>100</width>
+               <width>0</width>
                <height>0</height>
               </size>
              </property>
              <property name="text">
-              <string>Unstage all</string>
+              <string>Unstage</string>
              </property>
             </widget>
            </item>
@@ -89,7 +89,7 @@
             <set>QAbstractItemView::NoEditTriggers</set>
            </property>
            <property name="selectionMode">
-            <enum>QAbstractItemView::SingleSelection</enum>
+            <enum>QAbstractItemView::ExtendedSelection</enum>
            </property>
            <property name="selectionBehavior">
             <enum>QAbstractItemView::SelectRows</enum>
@@ -157,12 +157,12 @@
               </size>
              </property>
              <property name="text">
-              <string>Unstaged files</string>
+              <string>Unstaged</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="stageAllBtn">
+            <widget class="QPushButton" name="stageBtn">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -171,12 +171,12 @@
              </property>
              <property name="minimumSize">
               <size>
-               <width>100</width>
+               <width>0</width>
                <height>0</height>
               </size>
              </property>
              <property name="text">
-              <string>Stage all</string>
+              <string>Stage</string>
              </property>
             </widget>
            </item>
@@ -187,8 +187,11 @@
            <property name="editTriggers">
             <set>QAbstractItemView::NoEditTriggers</set>
            </property>
+           <property name="showDropIndicator" stdset="0">
+            <bool>true</bool>
+           </property>
            <property name="selectionMode">
-            <enum>QAbstractItemView::SingleSelection</enum>
+            <enum>QAbstractItemView::ExtendedSelection</enum>
            </property>
            <property name="selectionBehavior">
             <enum>QAbstractItemView::SelectRows</enum>

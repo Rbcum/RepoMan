@@ -4,6 +4,7 @@
 #include <QFutureWatcher>
 #include <QMutex>
 #include <QPromise>
+#include <QTableWidgetItem>
 #include <QThreadPool>
 #include <QWaitCondition>
 #include <QWidget>
@@ -45,6 +46,8 @@ private:
     QList<GitFile> m_stagedList;
     QList<GitFile> m_unstagedList;
     QList<DiffHunk> m_diffHunks;
+    int m_stagedSelection = -1;
+    int m_unstagedSelection = -1;
 
     struct ChangesResult
     {
@@ -61,6 +64,7 @@ private:
     void getChangesAsync(const QString &projectPath, QProgressIndicator *const indicator);
     void getDiffAsync(const QString &projectPath, const GitFile &file, bool staged,
         QProgressIndicator *const indicator);
+    void updateGitIndex(QObject *stageSender);
 
 signals:
     void commitEvent(const HistorySelectionArg &arg = HistorySelectionArg());
@@ -68,7 +72,7 @@ signals:
 
 private slots:
     void onFileDoubleClicked(int row, int column);
-    void onFileSelected();
+    void onFileSelected(QTableWidgetItem *current, QTableWidgetItem *previous);
     void onTableButtonClicked();
     void onAmendToggled(bool checked);
     void onCommit();
