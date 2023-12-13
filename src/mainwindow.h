@@ -44,6 +44,8 @@ private:
     QAction *m_actionClean;
     QAction *m_actionTerm;
     QAction *m_actionFolder;
+    QAction *m_actionRepoSwitchManifest;
+    QAction *m_actionRepoSync;
     QProgressIndicator *m_indicator;
     QLabel *m_statusLabel;
 

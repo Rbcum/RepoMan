@@ -40,6 +40,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     // ToolBar
     ui->toolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    m_actionRepoSwitchManifest = ui->toolBar->addAction(
+        QIcon("://resources/icon_switch_manifest.svg"), "Manifest", this, &MainWindow::onAction);
+    m_actionRepoSwitchManifest->setToolTip("Switch Manifest");
+    m_actionRepoSync = ui->toolBar->addAction(
+        QIcon("://resources/icon_sync.svg"), "Sync", this, &MainWindow::onAction);
+    m_actionRepoSync->setToolTip("Repo Sync");
+    ui->toolBar->widgetForAction(ui->toolBar->addWidget(new QWidget()))->setFixedSize(40, 0);
     m_actionPush = ui->toolBar->addAction(
         QIcon("://resources/action_push.svg"), "Push", this, &MainWindow::onAction);
     m_actionPull = ui->toolBar->addAction(
@@ -97,12 +104,12 @@ void MainWindow::onAction()
         qApp->quit();
     } else if (action == ui->actionFile_Configurations) {
         QDesktopServices::openUrl(QUrl::fromLocalFile(QSettings().fileName()));
-    } else if (action == ui->actionRepo_Sync) {
+    } else if (action == ui->actionRepo_Sync || action == m_actionRepoSync) {
         RepoSyncDialog dialog(this);
         dialog.exec();
     } else if (action == ui->actionRepo_Start) {
         onActionRepoStart();
-    } else if (action == ui->actionRepo_Switch_manifest) {
+    } else if (action == ui->actionRepo_Switch_manifest || action == m_actionRepoSwitchManifest) {
         SwitchManifestDialog dialog(this);
         if (dialog.exec()) openRepo();
     } else if (action == ui->actionHelp_About) {

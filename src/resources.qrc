@@ -16,5 +16,7 @@
         <file>resources/icon_cloud.svg</file>
         <file>resources/icon_close.svg</file>
         <file>resources/icon_add.svg</file>
+        <file>resources/icon_switch_manifest.svg</file>
+        <file>resources/icon_sync.svg</file>
     </qresource>
 </RCC>
