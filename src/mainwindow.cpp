@@ -17,6 +17,7 @@
 
 #include "dialogs/cmddialog.h"
 #include "dialogs/reposyncdialog.h"
+#include "dialogs/switchmanifestdialog.h"
 #include "global.h"
 #include "pages/newtabpage.h"
 #include "ui_mainwindow.h"
@@ -102,7 +103,8 @@ void MainWindow::onAction()
     } else if (action == ui->actionRepo_Start) {
         onActionRepoStart();
     } else if (action == ui->actionRepo_Switch_manifest) {
-        onActionSwitchManifest();
+        SwitchManifestDialog dialog(this);
+        if (dialog.exec()) openRepo();
     } else if (action == ui->actionHelp_About) {
         QMessageBox::about(this, "RepoMan", "Repo GUI front-end");
     } else if (action == m_actionPush) {
@@ -199,27 +201,6 @@ void MainWindow::restoreTabs()
         for (const QString &path : value.split(";")) {
             addTab(manifest.projectMap.value(path));
         }
-    }
-}
-
-void MainWindow::onActionSwitchManifest()
-{
-    QString path = QFileDialog::getOpenFileName(
-        this, "Select manifest file", manifest.filePath, "Xmls (*.xml)");
-    if (path.isEmpty()) {
-        return;
-    }
-    QString cwd = QSettings().value("cwd").toString();
-    QString manifestDir = QDir::cleanPath(cwd + "/.repo/manifests/");
-    if (!path.startsWith(manifestDir)) {
-        QMessageBox msgBox;
-        msgBox.warning(this, "Error", "Manifest file does not belong to this repo");
-        return;
-    }
-    QString arg = path.remove(0, manifestDir.length() + 1);
-    QString cmd = QString("repo init -m %1").arg(arg);
-    if (CmdDialog::execute(this, cmd, cwd) == 0) {
-        openRepo();
     }
 }
 

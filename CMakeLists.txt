@@ -31,6 +31,7 @@ set(PROJECT_SOURCES
         src/dialogs/cleandialog.h src/dialogs/cleandialog.cpp
         src/dialogs/deleterefdialog.h src/dialogs/deleterefdialog.cpp
         src/dialogs/warningfilelistdialog.h src/dialogs/warningfilelistdialog.cpp
+        src/dialogs/switchmanifestdialog.h src/dialogs/switchmanifestdialog.cpp
         src/pages/changespage.h src/pages/changespage.cpp
         src/pages/historypage.h src/pages/historypage.cpp
         src/pages/pagehost.h src/pages/pagehost.cpp
@@ -43,6 +44,7 @@ set(PROJECT_SOURCES
         src/widgets/commitdetailscrollarea.h src/widgets/commitdetailscrollarea.cpp
         src/widgets/reftreeview.h src/widgets/reftreeview.cpp
         src/widgets/tabwidgetex.h src/widgets/tabwidgetex.cpp
+        src/widgets/pathfinderview.h src/widgets/pathfinderview.cpp
 )
 
 set(PTY_SOURCES
@@ -60,7 +62,7 @@ qt_add_executable(RepoMan
     MANUAL_FINALIZATION
     ${PROJECT_SOURCES}
     ${PTY_SOURCES}
-   )
+)
 
 target_include_directories(RepoMan
     PRIVATE

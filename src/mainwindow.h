@@ -47,7 +47,6 @@ private:
     QProgressIndicator *m_indicator;
     QLabel *m_statusLabel;
 
-    void onActionSwitchManifest();
     void onActionOpen();
     void onActionRepoStart();
     void onProjectAction(void (PageHost::*func)());
