@@ -20,12 +20,14 @@ RepoSyncDialog::~RepoSyncDialog()
 void RepoSyncDialog::accept()
 {
     QString cmd =
-        QString("repo sync -f -j%1%2%3%4%5%6%7")
+        QString("repo sync -f -j%1%2%3%4%5%6%7%8%9")
             .arg(QString::number(ui->jobsSpin->value()),
                 ui->forceCB->isChecked() ? " --force-sync" : "",
                 ui->detachCB->isChecked() ? " -d" : "", ui->localOnyCB->isChecked() ? " -l" : "",
                 ui->networkOnlyCB->isChecked() ? " -n" : "",
                 ui->pruneCB->isChecked() ? " --prune" : "",
+                ui->currentBranchCB->isChecked() ? " -c" : "",
+                ui->noTagsCB->isChecked() ? " --no-tags" : "",
                 ui->verboseBox->isChecked() ? " -v" : "");
     QString cwd = QSettings().value("cwd").toString();
     int code = CmdDialog::execute(parentWidget(), cmd, cwd);

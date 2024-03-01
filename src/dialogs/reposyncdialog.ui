@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>411</width>
-    <height>257</height>
+    <height>315</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -46,6 +46,29 @@
     <widget class="QCheckBox" name="pruneCB">
      <property name="text">
       <string>[Prune] Delete refs that no longer exist on the remote</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="currentBranchCB">
+     <property name="text">
+      <string>[CurrentBranch] Fetch only current branch</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="noTagsCB">
+     <property name="text">
+      <string>[NoTags] Don't fetch tags</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
