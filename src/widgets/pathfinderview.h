@@ -10,7 +10,7 @@ public:
     PathFinderView(QWidget *parent);
     ~PathFinderView();
     void setPath(const QString &path);
-    void setHiddenParent(const QString &hiddenParent);
+    void setTitle(const QString &title);
 
 signals:
     void pathClicked(const QString &newPath);
@@ -20,11 +20,13 @@ private slots:
 
 private:
     QList<QString> m_pathSegments;
-    QString m_hiddenParent;
+    QString m_title;
     QString m_path;
 
     void updateUI();
     void clearPathViews();
+    void addSegmentView(const QString &text, int index);
+    void addSeperatorView(const QString &seperator);
 };
 
 #endif  // PATHFINDERVIEW_H
