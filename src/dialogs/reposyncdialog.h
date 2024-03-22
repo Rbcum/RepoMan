@@ -4,7 +4,7 @@
 #include <QDialog>
 
 namespace Ui {
-class RepoSyncDialog;
+    class RepoSyncDialog;
 }
 
 class RepoSyncDialog : public QDialog
@@ -18,8 +18,11 @@ public:
 public slots:
     void accept() override;
 
+private slots:
+    void onCheckStateChanged(int state);
+
 private:
     Ui::RepoSyncDialog *ui;
 };
 
-#endif // REPOSYNCDIALOG_H
+#endif  // REPOSYNCDIALOG_H

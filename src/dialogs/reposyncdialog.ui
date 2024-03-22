@@ -6,21 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>411</width>
-    <height>315</height>
+    <width>435</width>
+    <height>295</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Repo sync</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QCheckBox" name="forceCB">
-     <property name="text">
-      <string>[Force] May cause loss of data!</string>
-     </property>
-    </widget>
-   </item>
    <item>
     <widget class="QCheckBox" name="localOnyCB">
      <property name="text">
@@ -32,6 +25,28 @@
     <widget class="QCheckBox" name="networkOnlyCB">
      <property name="text">
       <string>[Network] Fetch only, don't update working tree</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+     <property name="lineWidth">
+      <number>1</number>
+     </property>
+     <property name="midLineWidth">
+      <number>0</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
@@ -73,9 +88,9 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="verboseBox">
+    <widget class="QCheckBox" name="forceCB">
      <property name="text">
-      <string>[Verbose] Show all output</string>
+      <string>[Force] May cause loss of data!</string>
      </property>
     </widget>
    </item>
