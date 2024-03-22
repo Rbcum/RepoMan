@@ -1,15 +1,15 @@
 #include "reposyncdialog.h"
 
 #include <QSettings>
+#include <QThread>
 
 #include "cmddialog.h"
-#include "global.h"
 #include "ui_reposyncdialog.h"
 
 RepoSyncDialog::RepoSyncDialog(QWidget *parent) : QDialog(parent), ui(new Ui::RepoSyncDialog)
 {
     ui->setupUi(this);
-    ui->jobsSpin->setValue(global::manifest.syncJ);
+    ui->jobsSpin->setValue(QThread::idealThreadCount() * 2);
 }
 
 RepoSyncDialog::~RepoSyncDialog()
