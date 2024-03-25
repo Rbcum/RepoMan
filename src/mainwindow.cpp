@@ -105,13 +105,18 @@ void MainWindow::onAction()
     } else if (action == ui->actionFile_Configurations) {
         QDesktopServices::openUrl(QUrl::fromLocalFile(QSettings().fileName()));
     } else if (action == ui->actionRepo_Sync || action == m_actionRepoSync) {
-        RepoSyncDialog dialog(this);
-        dialog.exec();
+        openRepoSyncDialog();
     } else if (action == ui->actionRepo_Start) {
         onActionRepoStart();
     } else if (action == ui->actionRepo_Switch_manifest || action == m_actionRepoSwitchManifest) {
         SwitchManifestDialog dialog(this);
-        if (dialog.exec()) openRepo();
+        int code = dialog.exec();
+        if (code == QDialog::Accepted) {
+            openRepo();
+        } else if (code == SwitchManifestDialog::OpenSync) {
+            openRepo();
+            openRepoSyncDialog();
+        }
     } else if (action == ui->actionHelp_About) {
         QMessageBox::about(this, "RepoMan", "Repo GUI front-end");
     } else if (action == m_actionPush) {
@@ -209,6 +214,23 @@ void MainWindow::restoreTabs()
             addTab(manifest.projectMap.value(path));
         }
     }
+}
+
+void MainWindow::openRepoSyncDialog()
+{
+    QList<RepoProject> projects;
+    int currentIndex = -1;
+    for (int i = 0; i < ui->tabWidget->count(); ++i) {
+        auto data = ui->tabWidget->tabData(i).value<TabData>();
+        if (!data.isNewTab) {
+            projects.append(data.project);
+            if (i == ui->tabWidget->currentIndex()) {
+                currentIndex = projects.size() - 1;
+            }
+        }
+    }
+    RepoSyncDialog dialog(this, currentIndex, projects);
+    dialog.exec();
 }
 
 void MainWindow::onActionRepoStart()

@@ -99,12 +99,8 @@ void SwitchManifestDialog::accept()
     QString cwd = QSettings().value("cwd").toString();
     QString cmd = QString("repo init -m %1 -b %2").arg(path, ui->branchCombo->currentText());
     int code = CmdDialog::execute(this, cmd, cwd);
-    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
-
-    if (ui->syncSwitch->isChecked()) {
-        RepoSyncDialog dialog(parentWidget());
-        dialog.exec();
-    }
+    done(
+        code == 0 ? ui->syncSwitch->isChecked() ? OpenSync : QDialog::Accepted : QDialog::Rejected);
 }
 
 QSharedPointer<FileEntry> SwitchManifestDialog::buildManifestTree(const QString &branch)

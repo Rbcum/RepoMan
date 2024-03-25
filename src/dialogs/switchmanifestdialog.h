@@ -72,6 +72,11 @@ public:
     explicit SwitchManifestDialog(QWidget *parent = nullptr);
     ~SwitchManifestDialog();
 
+    enum DialogCode
+    {
+        OpenSync = QDialog::Accepted + 1
+    };
+
 private slots:
     void onFileDoubleClicked(const QModelIndex &index);
     void onPathClicked(const QString &path);

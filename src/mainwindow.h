@@ -59,6 +59,7 @@ private:
     int addTab(const RepoProject &project, bool isNewTab = false, int index = -1);
     void saveTabs();
     void restoreTabs();
+    void openRepoSyncDialog();
 };
 
 #endif  // MAINWINDOW_H
