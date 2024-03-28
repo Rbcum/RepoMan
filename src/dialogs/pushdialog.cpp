@@ -32,7 +32,8 @@ PushDialog::PushDialog(QWidget *parent, const QString &projectPath)
     connect(
         ui->remoteBox, &QComboBox::currentIndexChanged, this, &PushDialog::updateTargetBranchUI);
     connect(ui->replaceHostCB, &QCheckBox::stateChanged, this, [&](int state) {
-        QSettings().setValue(global::getRepoSettingsKey("replaceHostChecked"), state == Qt::Checked);
+        QSettings().setValue(
+            global::getRepoSettingsKey("replaceHostChecked"), state == Qt::Checked);
         updateUrlUI();
     });
     connect(ui->replaceHostEdit, &QLineEdit::textChanged, this, [&](const QString &text) {
@@ -90,7 +91,8 @@ PushDialog::~PushDialog()
 void PushDialog::updateUrlUI()
 {
     QSettings settings;
-    bool useEditHost = settings.value(global::getRepoSettingsKey("replaceHostChecked"), false).toBool();
+    bool useEditHost =
+        settings.value(global::getRepoSettingsKey("replaceHostChecked"), false).toBool();
     QString editHost = settings.value(global::getRepoSettingsKey("replaceHost")).toString();
     ui->replaceHostCB->setChecked(useEditHost);
     ui->replaceHostEdit->setText(editHost);
@@ -123,8 +125,9 @@ void PushDialog::accept()
     QString targetBranch = ui->targetBranchBox->currentText().isEmpty()
                                ? ui->localBranchBox->currentText()
                                : ui->targetBranchBox->currentText();
-    QString cmd = QString("git push %1 HEAD:%2%3")
-                      .arg(ui->urlTextEdit->toPlainText(),
+    QString cmd = QString("git push%1 %2 HEAD:%3%4")
+                      .arg(ui->noThinCheckBox->isChecked() ? " --no-thin" : "",
+                          ui->urlTextEdit->toPlainText(),
                           ui->refForCheckBox->isChecked() ? "refs/for/" : "", targetBranch);
     int code = CmdDialog::execute(parentWidget(), cmd, m_projectPath);
     done(code == 0 ? QDialog::Accepted : QDialog::Rejected);

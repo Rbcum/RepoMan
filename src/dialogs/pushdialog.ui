@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>600</width>
-    <height>325</height>
+    <height>356</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -182,14 +182,41 @@
        </layout>
       </item>
       <item>
-       <widget class="QCheckBox" name="refForCheckBox">
-        <property name="text">
-         <string>Add ref/for</string>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <property name="topMargin">
+         <number>0</number>
         </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
+        <item>
+         <widget class="QCheckBox" name="refForCheckBox">
+          <property name="text">
+           <string>Add ref/for</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="noThinCheckBox">
+          <property name="text">
+           <string>No thin</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>

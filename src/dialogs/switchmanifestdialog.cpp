@@ -8,7 +8,6 @@
 
 #include "cmddialog.h"
 #include "global.h"
-#include "reposyncdialog.h"
 #include "ui_switchmanifestdialog.h"
 
 using namespace global;
