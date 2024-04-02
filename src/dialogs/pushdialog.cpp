@@ -32,12 +32,13 @@ PushDialog::PushDialog(QWidget *parent, const QString &projectPath)
     connect(
         ui->remoteBox, &QComboBox::currentIndexChanged, this, &PushDialog::updateTargetBranchUI);
     connect(ui->replaceHostCB, &QCheckBox::stateChanged, this, [&](int state) {
-        QSettings().setValue(
-            global::getRepoSettingsKey("replaceHostChecked"), state == Qt::Checked);
+        auto settings = global::getRepoSettings();
+        settings.setValue("replaceHostChecked", state == Qt::Checked);
         updateUrlUI();
     });
     connect(ui->replaceHostEdit, &QLineEdit::textChanged, this, [&](const QString &text) {
-        QSettings().setValue(global::getRepoSettingsKey("replaceHost"), text);
+        auto settings = global::getRepoSettings();
+        settings.setValue("replaceHost", text);
         updateUrlUI();
     });
     connect(ui->localBranchBox, &QComboBox::currentIndexChanged, this,
@@ -90,10 +91,9 @@ PushDialog::~PushDialog()
 
 void PushDialog::updateUrlUI()
 {
-    QSettings settings;
-    bool useEditHost =
-        settings.value(global::getRepoSettingsKey("replaceHostChecked"), false).toBool();
-    QString editHost = settings.value(global::getRepoSettingsKey("replaceHost")).toString();
+    auto settings = global::getRepoSettings();
+    bool useEditHost = settings.value("replaceHostChecked", false).toBool();
+    QString editHost = settings.value("replaceHost").toString();
     ui->replaceHostCB->setChecked(useEditHost);
     ui->replaceHostEdit->setText(editHost);
     ui->replaceHostEdit->setEnabled(useEditHost);

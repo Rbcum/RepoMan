@@ -31,7 +31,7 @@ SwitchManifestDialog::SwitchManifestDialog(QWidget *parent)
     m_indicator->startHint();
     QtConcurrent::run([=]() {
         InitData data;
-        QString cwd = QSettings().value("cwd").toString();
+        QString cwd = global::cwd;
         global::getCmdCode("git fetch", cwd + "/.repo/manifests");
         data.currentBranch = global::getCmdResult(
             "git rev-parse --abbrev-ref --symbolic-full-name @{u}", cwd + "/.repo/manifests")
@@ -95,18 +95,17 @@ void SwitchManifestDialog::accept()
                        .toString();
     if (!path.endsWith(".xml")) return;
 
-    QString cwd = QSettings().value("cwd").toString();
     QString cmd = QString("repo init -m %1 -b %2").arg(path, ui->branchCombo->currentText());
-    int code = CmdDialog::execute(this, cmd, cwd);
+    int code = CmdDialog::execute(this, cmd, global::cwd);
     done(
         code == 0 ? ui->syncSwitch->isChecked() ? OpenSync : QDialog::Accepted : QDialog::Rejected);
 }
 
 QSharedPointer<FileEntry> SwitchManifestDialog::buildManifestTree(const QString &branch)
 {
-    QString cwd = QSettings().value("cwd").toString();
-    const QString &cmdResult = global::getCmdResult(
-        "git ls-tree -r --name-only origin/" + branch, cwd + "/.repo/manifests");
+    const QString &manDir = QDir::cleanPath(global::cwd + "/.repo/manifests");
+    const QString &cmdResult =
+        global::getCmdResult("git ls-tree -r --name-only origin/" + branch, manDir);
     QSharedPointer<FileEntry> rootEntry(new FileEntry());
     if (cmdResult.isEmpty()) {
         return rootEntry;
@@ -140,7 +139,7 @@ void SwitchManifestDialog::updateListUI(const QString &branch)
         m_indicator->stopHint();
         m_model->setRootEntry(rootEntry);
         if (branch == m_currentBranch) {
-            QString cwd = QSettings().value("cwd").toString();
+            QString cwd = global::cwd;
             QString manPath = QFileInfo(manifest.filePath).symLinkTarget();
             QString manDir = QFileInfo(manPath).absoluteDir().path();
             QString innerManDir = manDir.sliced(QDir::cleanPath(cwd + "/.repo/manifests/").size());

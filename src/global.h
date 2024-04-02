@@ -76,8 +76,10 @@ struct Manifest
 namespace global {
     extern int commitPageSize;
     extern Manifest manifest;
+    extern QString cwd;
 
-    extern QString getRepoSettingsKey(const QString &key);
+    extern QSettings getRepoSettings();
+    extern QSettings getGlobalSettings();
     extern int getCmdCode(const QString &cmd, const QString &dir);
     extern QString getCmdResult(const QString &cmd, const QString &dir);
 }  // namespace global

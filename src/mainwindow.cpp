@@ -103,7 +103,7 @@ void MainWindow::onAction()
     } else if (action == ui->actionFile_Exit) {
         qApp->quit();
     } else if (action == ui->actionFile_Configurations) {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(QSettings().fileName()));
+        QDesktopServices::openUrl(QUrl::fromLocalFile(global::getRepoSettings().fileName()));
     } else if (action == ui->actionRepo_Sync || action == m_actionRepoSync) {
         openRepoSyncDialog();
     } else if (action == ui->actionRepo_Start) {
@@ -201,12 +201,13 @@ void MainWindow::saveTabs()
         value.append(data.project.path);
         if (i < count - 1) value.append(";");
     }
-    QSettings().setValue(getRepoSettingsKey("tabs"), value);
+    auto settings = global::getRepoSettings();
+    settings.setValue("tabs", value);
 }
 
 void MainWindow::restoreTabs()
 {
-    QString value = QSettings().value(getRepoSettingsKey("tabs")).toString();
+    QString value = global::getRepoSettings().value("tabs").toString();
     if (value.isEmpty()) {
         addTab(RepoProject(), true);
     } else {
@@ -248,7 +249,6 @@ void MainWindow::onActionRepoStart()
         QString branch = inputDlg.textValue();
         if (!branch.isEmpty()) {
             QString cmd = QString("repo start --all %1").arg(branch);
-            QString cwd = QSettings().value("cwd").toString();
             CmdDialog::execute(this, cmd, cwd);
         }
     }
@@ -256,7 +256,6 @@ void MainWindow::onActionRepoStart()
 
 void MainWindow::onActionOpen()
 {
-    QString cwd = QSettings().value("cwd", QDir::homePath()).toString();
     QString path = QFileDialog::getExistingDirectory(this, "Open repo", cwd);
     if (path.isEmpty()) {
         return;
@@ -266,13 +265,15 @@ void MainWindow::onActionOpen()
         msgBox.warning(this, "Error", path + " is not a valid repo");
         return;
     }
-    QSettings().setValue("cwd", path);
+    cwd = path;
+    auto settings = global::getRepoSettings();
+    settings.setValue("cwd", cwd);
+
     openRepo();
 }
 
 void MainWindow::openRepo()
 {
-    QString cwd = QSettings().value("cwd").toString();
     if (cwd.isEmpty()) {
         return;
     }
@@ -283,7 +284,6 @@ void MainWindow::openRepo()
 
 void MainWindow::updateUI()
 {
-    QString cwd = QSettings().value("cwd").toString();
     setWindowTitle(QString("%1 - %2").arg(cwd, QApplication::applicationName()));
 
     QString targetManifest = QFileInfo(manifest.filePath).symLinkTarget();
@@ -305,7 +305,6 @@ void MainWindow::parseManifest(const QString &manPath)
     manifest = {};
     manifest.filePath = manPath;
 
-    const QString &cwd = QSettings().value("cwd").toString();
     QDomNode n = doc.documentElement().firstChild();
     while (!n.isNull()) {
         QDomElement e = n.toElement();

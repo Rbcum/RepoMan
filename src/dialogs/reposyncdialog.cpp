@@ -56,8 +56,7 @@ void RepoSyncDialog::accept()
                 ui->pruneCB->isChecked() ? " --prune" : "",
                 ui->currentBranchCB->isChecked() ? " -c" : "",
                 ui->noTagsCB->isChecked() ? " --no-tags" : "", projectsArg);
-    QString cwd = QSettings().value("cwd").toString();
-    int code = CmdDialog::execute(parentWidget(), cmd, cwd);
+    int code = CmdDialog::execute(parentWidget(), cmd, global::cwd);
     done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }
 

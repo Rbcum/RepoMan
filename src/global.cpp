@@ -5,11 +5,17 @@
 namespace global {
     Manifest manifest;
     int commitPageSize = 100;
+    QString cwd;
 
-    QString getRepoSettingsKey(const QString &key)
+    QSettings getRepoSettings()
     {
-        QString cwd = QSettings().value("cwd").toString().replace("/", "_");
-        return QString("repo%1/%2").arg(cwd, key);
+        const QString &confFile = QDir::cleanPath(cwd + "/repoman.conf");
+        return QSettings(confFile, QSettings::NativeFormat);
+    }
+
+    QSettings getGlobalSettings()
+    {
+        return QSettings();
     }
 
     int getCmdCode(const QString &cmd, const QString &dir)
