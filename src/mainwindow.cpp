@@ -32,7 +32,8 @@ MainWindow::MainWindow(QString repoPath)
 
     // MenuBar
     connect(ui->actionFile_Open, &QAction::triggered, this, &MainWindow::onAction);
-    connect(ui->actionFile_Configurations, &QAction::triggered, this, &MainWindow::onAction);
+    connect(ui->actionFile_Preference, &QAction::triggered, this, &MainWindow::onAction);
+    connect(ui->actionFile_Preference_Global, &QAction::triggered, this, &MainWindow::onAction);
     connect(ui->actionFile_Exit, &QAction::triggered, this, &MainWindow::onAction);
     connect(ui->actionRepo_Init, &QAction::triggered, this, &MainWindow::onAction);
     connect(ui->actionRepo_Switch_manifest, &QAction::triggered, this, &MainWindow::onAction);
@@ -105,8 +106,10 @@ void MainWindow::onAction()
         onActionOpen();
     } else if (action == ui->actionFile_Exit) {
         qApp->quit();
-    } else if (action == ui->actionFile_Configurations) {
+    } else if (action == ui->actionFile_Preference) {
         QDesktopServices::openUrl(QUrl::fromLocalFile(m_context.settings().fileName()));
+    } else if (action == ui->actionFile_Preference_Global) {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(QSettings().fileName()));
     } else if (action == ui->actionRepo_Init) {
         RepoInitDialog dialog(this);
         if (dialog.exec()) {

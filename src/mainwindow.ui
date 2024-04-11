@@ -91,7 +91,8 @@ QTabBar::close-button:pressed {
     </property>
     <addaction name="actionFile_Open"/>
     <addaction name="separator"/>
-    <addaction name="actionFile_Configurations"/>
+    <addaction name="actionFile_Preference"/>
+    <addaction name="actionFile_Preference_Global"/>
     <addaction name="separator"/>
     <addaction name="actionFile_Exit"/>
    </widget>
@@ -137,9 +138,9 @@ QTabBar::close-button:pressed {
     <string>Open...</string>
    </property>
   </action>
-  <action name="actionFile_Configurations">
+  <action name="actionFile_Preference">
    <property name="text">
-    <string>Configuration File</string>
+    <string>Preference</string>
    </property>
   </action>
   <action name="actionFile_Exit">
@@ -170,6 +171,11 @@ QTabBar::close-button:pressed {
   <action name="actionRepo_Init">
    <property name="text">
     <string>Init</string>
+   </property>
+  </action>
+  <action name="actionFile_Preference_Global">
+   <property name="text">
+    <string>Preference (Global)</string>
    </property>
   </action>
  </widget>
