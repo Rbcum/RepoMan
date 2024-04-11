@@ -1,12 +1,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QComboBox>
 #include <QLabel>
 #include <QMainWindow>
 #include <QThreadPool>
 
-#include "global.h"
 #include "pages/pagehost.h"
+#include "repocontext.h"
 #include "widgets/QProgressIndicator.h"
 
 namespace Ui {
@@ -18,13 +19,13 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QString repoPath = "");
     ~MainWindow();
     bool eventFilter(QObject *watched, QEvent *event) override;
 
     struct TabData
     {
-        RepoProject project;
+        Project project;
         QWidget *page;
         bool isNewTab = false;
     };
@@ -32,7 +33,7 @@ public:
 private slots:
     void onAction();
     void closeTab(int index);
-    void openProject(const RepoProject &project);
+    void openProject(const Project &project);
 
 private:
     Ui::MainWindow *ui;
@@ -48,18 +49,24 @@ private:
     QAction *m_actionRepoSync;
     QProgressIndicator *m_indicator;
     QLabel *m_statusLabel;
+    QComboBox *m_projectCombo;
+
+    RepoContext m_context;
 
     void onActionOpen();
     void onActionRepoStart();
+    void onActionRepoSync();
     void onProjectAction(void (PageHost::*func)());
 
-    void openRepo();
-    void parseManifest(const QString &manPath);
     void updateUI();
-    int addTab(const RepoProject &project, bool isNewTab = false, int index = -1);
+    int addTab(const Project &project, bool isNewTab = false, int index = -1);
     void saveTabs();
     void restoreTabs();
-    void openRepoSyncDialog();
+    void closeAllTabs();
+    void openRepo(const QString &path);
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
 };
 
 #endif  // MAINWINDOW_H

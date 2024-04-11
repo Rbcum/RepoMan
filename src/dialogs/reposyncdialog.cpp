@@ -6,10 +6,11 @@
 #include "cmddialog.h"
 #include "ui_reposyncdialog.h"
 
-RepoSyncDialog::RepoSyncDialog(
-    QWidget *parent, int currentIndex, const QList<RepoProject> &projects)
+RepoSyncDialog::RepoSyncDialog(QWidget *parent, const RepoContext &context, int currentIndex,
+    const QList<Project> &projects)
     : QDialog(parent),
       ui(new Ui::RepoSyncDialog),
+      m_context(context),
       m_currentIndex(currentIndex),
       m_projects(projects)
 {
@@ -56,7 +57,7 @@ void RepoSyncDialog::accept()
                 ui->pruneCB->isChecked() ? " --prune" : "",
                 ui->currentBranchCB->isChecked() ? " -c" : "",
                 ui->noTagsCB->isChecked() ? " --no-tags" : "", projectsArg);
-    int code = CmdDialog::execute(parentWidget(), cmd, global::cwd);
+    int code = CmdDialog::execute(parentWidget(), cmd, m_context.repoPath());
     done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }
 

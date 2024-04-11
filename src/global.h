@@ -48,38 +48,9 @@ struct GitFile
     }
 };
 
-struct RepoProject
-{
-    RepoProject()
-    {
-    }
-
-    RepoProject(const QString &name, const QString &path, const QString &absPath)
-        : name(name), path(path), absPath(absPath)
-    {
-    }
-    QString name;
-    QString path;
-    QString absPath;
-};
-
-struct Manifest
-{
-    QString filePath;
-    QString remote;
-    QString revision;
-    int syncJ;
-    QList<RepoProject> projectList;
-    QMap<QString, RepoProject> projectMap;  // key:path
-};
-
 namespace global {
     extern int commitPageSize;
-    extern Manifest manifest;
-    extern QString cwd;
 
-    extern QSettings getRepoSettings();
-    extern QSettings getGlobalSettings();
     extern int getCmdCode(const QString &cmd, const QString &dir);
     extern QString getCmdResult(const QString &cmd, const QString &dir);
 }  // namespace global

@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QSettings>
 
+#include "repocontext.h"
 #include "widgets/QProgressIndicator.h"
 
 namespace Ui {
@@ -15,7 +16,7 @@ class PushDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit PushDialog(QWidget *parent, const QString &projectPath);
+    explicit PushDialog(QWidget *parent, const RepoContext &context, const QString &projectPath);
     ~PushDialog();
 
 public slots:
@@ -34,6 +35,7 @@ private:
     };
 
     Ui::PushDialog *ui;
+    RepoContext m_context;
     QProgressIndicator *m_indicator;
     QString m_projectPath;
     QMap<QString, QStringList> m_remoteBranches;

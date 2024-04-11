@@ -9,8 +9,8 @@
 #include "global.h"
 #include "ui_pushdialog.h"
 
-PushDialog::PushDialog(QWidget *parent, const QString &projectPath)
-    : QDialog(parent), ui(new Ui::PushDialog), m_projectPath(projectPath)
+PushDialog::PushDialog(QWidget *parent, const RepoContext &context, const QString &projectPath)
+    : QDialog(parent), ui(new Ui::PushDialog), m_context(context), m_projectPath(projectPath)
 {
     ui->setupUi(this);
     m_indicator = new QProgressIndicator(this);
@@ -32,12 +32,12 @@ PushDialog::PushDialog(QWidget *parent, const QString &projectPath)
     connect(
         ui->remoteBox, &QComboBox::currentIndexChanged, this, &PushDialog::updateTargetBranchUI);
     connect(ui->replaceHostCB, &QCheckBox::stateChanged, this, [&](int state) {
-        auto settings = global::getRepoSettings();
+        auto settings = m_context.settings();
         settings.setValue("replaceHostChecked", state == Qt::Checked);
         updateUrlUI();
     });
     connect(ui->replaceHostEdit, &QLineEdit::textChanged, this, [&](const QString &text) {
-        auto settings = global::getRepoSettings();
+        auto settings = m_context.settings();
         settings.setValue("replaceHost", text);
         updateUrlUI();
     });
@@ -91,7 +91,7 @@ PushDialog::~PushDialog()
 
 void PushDialog::updateUrlUI()
 {
-    auto settings = global::getRepoSettings();
+    auto settings = m_context.settings();
     bool useEditHost = settings.value("replaceHostChecked", false).toBool();
     QString editHost = settings.value("replaceHost").toString();
     ui->replaceHostCB->setChecked(useEditHost);
@@ -116,7 +116,7 @@ void PushDialog::updateTargetBranchUI()
     ui->targetBranchBox->addItems(m_remoteBranches[ui->remoteBox->currentText()]);
     ui->targetBranchBox->setCurrentText(ui->localBranchBox->currentText());
     if (ui->targetBranchBox->currentText().isEmpty()) {
-        ui->targetBranchBox->setCurrentText(global::manifest.revision);
+        ui->targetBranchBox->setCurrentText(m_context.manifest().revision);
     }
 }
 

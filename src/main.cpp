@@ -8,9 +8,9 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    cwd = getGlobalSettings().value("cwd").toString();
-
-    MainWindow w;
+    auto cwd = QSettings().value("cwd").toString();
+    MainWindow w(cwd);
     w.show();
+
     return a.exec();
 }

@@ -12,8 +12,8 @@
 
 using namespace global;
 
-SwitchManifestDialog::SwitchManifestDialog(QWidget *parent)
-    : QDialog(parent), ui(new Ui::SwitchManifestDialog)
+SwitchManifestDialog::SwitchManifestDialog(QWidget *parent, const RepoContext &context)
+    : QDialog(parent), ui(new Ui::SwitchManifestDialog), m_context(context)
 {
     ui->setupUi(this);
     m_indicator = new QProgressIndicator(this);
@@ -26,19 +26,21 @@ SwitchManifestDialog::SwitchManifestDialog(QWidget *parent)
         ui->listView, &QListView::doubleClicked, this, &SwitchManifestDialog::onFileDoubleClicked);
     connect(
         ui->pathFinder, &PathFinderView::pathClicked, this, &SwitchManifestDialog::onPathClicked);
+    connect(
+        ui->branchCombo, &QComboBox::currentTextChanged, this, &SwitchManifestDialog::updateListUI);
 
     setEnabled(false);
     m_indicator->startHint();
     QtConcurrent::run([=]() {
         InitData data;
-        QString cwd = global::cwd;
-        global::getCmdCode("git fetch", cwd + "/.repo/manifests");
+        QString repoPath = m_context.repoPath();
+        global::getCmdCode("git fetch", repoPath + "/.repo/manifests");
         data.currentBranch = global::getCmdResult(
-            "git rev-parse --abbrev-ref --symbolic-full-name @{u}", cwd + "/.repo/manifests")
+            "git rev-parse --abbrev-ref --symbolic-full-name @{u}", repoPath + "/.repo/manifests")
                                  .trimmed()
                                  .mid(QString("origin/").size());
         QStringList lines =
-            global::getCmdResult("git branch -r", cwd + "/.repo/manifests").split('\n');
+            global::getCmdResult("git branch -r", repoPath + "/.repo/manifests").split('\n');
         for (const QString &line : lines) {
             QString trLine = line.trimmed();
             if (trLine.size() > 0) {
@@ -52,17 +54,22 @@ SwitchManifestDialog::SwitchManifestDialog(QWidget *parent)
         setEnabled(true);
         m_indicator->stopHint();
         m_currentBranch = data.currentBranch;
-        ui->branchCombo->addItems(data.remoteBranches);
+        {
+            const QSignalBlocker blocker(ui->branchCombo);
+            ui->branchCombo->addItems(data.remoteBranches);
+        }
         ui->branchCombo->setCurrentText(data.currentBranch);
-        updateListUI(m_currentBranch);
-        connect(ui->branchCombo, &QComboBox::currentTextChanged, this,
-            &SwitchManifestDialog::updateListUI);
     });
 }
 
 SwitchManifestDialog::~SwitchManifestDialog()
 {
     delete ui;
+}
+
+bool SwitchManifestDialog::syncAfterSwitch()
+{
+    return ui->syncSwitch->isChecked();
 }
 
 void SwitchManifestDialog::onFileDoubleClicked(const QModelIndex &index)
@@ -96,14 +103,13 @@ void SwitchManifestDialog::accept()
     if (!path.endsWith(".xml")) return;
 
     QString cmd = QString("repo init -m %1 -b %2").arg(path, ui->branchCombo->currentText());
-    int code = CmdDialog::execute(this, cmd, global::cwd);
-    done(
-        code == 0 ? ui->syncSwitch->isChecked() ? OpenSync : QDialog::Accepted : QDialog::Rejected);
+    int code = CmdDialog::execute(this, cmd, m_context.repoPath());
+    done(code == 0 ? QDialog::Accepted : QDialog::Rejected);
 }
 
 QSharedPointer<FileEntry> SwitchManifestDialog::buildManifestTree(const QString &branch)
 {
-    const QString &manDir = QDir::cleanPath(global::cwd + "/.repo/manifests");
+    const QString &manDir = QDir::cleanPath(m_context.repoPath() + "/.repo/manifests");
     const QString &cmdResult =
         global::getCmdResult("git ls-tree -r --name-only origin/" + branch, manDir);
     QSharedPointer<FileEntry> rootEntry(new FileEntry());
@@ -130,6 +136,7 @@ QSharedPointer<FileEntry> SwitchManifestDialog::buildManifestTree(const QString 
 
 void SwitchManifestDialog::updateListUI(const QString &branch)
 {
+    qDebug() << "updateListUI";
     setEnabled(false);
     m_indicator->startHint();
     QtConcurrent::run([=]() {
@@ -139,12 +146,12 @@ void SwitchManifestDialog::updateListUI(const QString &branch)
         m_indicator->stopHint();
         m_model->setRootEntry(rootEntry);
         if (branch == m_currentBranch) {
-            QString cwd = global::cwd;
-            QString manPath = QFileInfo(manifest.filePath).symLinkTarget();
+            QString manPath = QFileInfo(m_context.manifest().filePath).symLinkTarget();
             QString manDir = QFileInfo(manPath).absoluteDir().path();
-            QString innerManDir = manDir.sliced(QDir::cleanPath(cwd + "/.repo/manifests/").size());
+            QString innerManDir =
+                manDir.sliced(QDir::cleanPath(m_context.repoPath() + "/.repo/manifests/").size());
             QString innerManPath =
-                manPath.sliced(QDir::cleanPath(cwd + "/.repo/manifests/").size());
+                manPath.sliced(QDir::cleanPath(m_context.repoPath() + "/.repo/manifests/").size());
             // qDebug() << cwd << manPath << manDir << innerManDir;
 
             m_model->setCurrentPath(innerManDir);

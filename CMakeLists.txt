@@ -14,6 +14,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets Core5Compat Xml Concurrent)
 set(PROJECT_SOURCES
         src/resources.qrc
         src/global.cpp src/global.h
+        src/repocontext.h src/repocontext.cpp
         src/main.cpp
         src/busystatedisabler.h src/busystatedisabler.cpp
         src/mainwindow.h src/mainwindow.cpp
@@ -45,6 +46,7 @@ set(PROJECT_SOURCES
         src/widgets/reftreeview.h src/widgets/reftreeview.cpp
         src/widgets/tabwidgetex.h src/widgets/tabwidgetex.cpp
         src/widgets/pathfinderview.h src/widgets/pathfinderview.cpp
+        src/dialogs/repoinitdialog.h src/dialogs/repoinitdialog.cpp
 )
 
 set(PTY_SOURCES

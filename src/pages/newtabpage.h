@@ -7,6 +7,7 @@
 #include <QWidget>
 
 #include "global.h"
+#include "repocontext.h"
 
 namespace Ui {
     class NewTabPage;
@@ -17,13 +18,14 @@ class NewTabPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit NewTabPage(QWidget *parent = nullptr);
+    explicit NewTabPage(const RepoContext &context);
     ~NewTabPage();
 signals:
-    void projectDoubleClicked(const RepoProject &project);
+    void projectDoubleClicked(const Project &project);
 
 private:
     Ui::NewTabPage *ui;
+    RepoContext m_context;
 };
 
 class ProjectListModel : public QAbstractListModel
@@ -31,9 +33,12 @@ class ProjectListModel : public QAbstractListModel
     Q_OBJECT
 
 public:
-    ProjectListModel(QObject *parent);
+    ProjectListModel(QObject *parent, const RepoContext &context);
     int rowCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
+
+private:
+    RepoContext m_context;
 };
 
 class ProjectListDelegate : public QStyledItemDelegate

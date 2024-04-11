@@ -99,6 +99,7 @@ QTabBar::close-button:pressed {
     <property name="title">
      <string>Repo</string>
     </property>
+    <addaction name="actionRepo_Init"/>
     <addaction name="actionRepo_Switch_manifest"/>
     <addaction name="actionRepo_Sync"/>
     <addaction name="actionRepo_Start"/>
@@ -164,6 +165,11 @@ QTabBar::close-button:pressed {
   <action name="actionHelp_About">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionRepo_Init">
+   <property name="text">
+    <string>Init</string>
    </property>
   </action>
  </widget>

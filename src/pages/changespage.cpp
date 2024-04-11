@@ -12,7 +12,7 @@
 #include "dialogs/warningfilelistdialog.h"
 #include "ui_changespage.h"
 
-ChangesPage::ChangesPage(QWidget *parent, const RepoProject &project)
+ChangesPage::ChangesPage(QWidget *parent, const Project &project)
     : QWidget(parent), ui(new Ui::ChangesPage), m_project(project)
 {
     ui->setupUi(this);

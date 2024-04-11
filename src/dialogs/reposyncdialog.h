@@ -2,7 +2,7 @@
 #define REPOSYNCDIALOG_H
 #include <QDialog>
 
-#include "global.h"
+#include "repocontext.h"
 
 namespace Ui {
     class RepoSyncDialog;
@@ -13,8 +13,8 @@ class RepoSyncDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit RepoSyncDialog(QWidget *parent, int currentIndex,
-        const QList<RepoProject> &projects = QList<RepoProject>());
+    explicit RepoSyncDialog(QWidget *parent, const RepoContext &context, int currentIndex,
+        const QList<Project> &projects = QList<Project>());
     ~RepoSyncDialog();
 
 public slots:
@@ -25,7 +25,8 @@ private slots:
 
 private:
     Ui::RepoSyncDialog *ui;
-    QList<RepoProject> m_projects;
+    RepoContext m_context;
+    QList<Project> m_projects;
     int m_currentIndex;
 };
 

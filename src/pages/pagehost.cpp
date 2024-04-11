@@ -11,8 +11,8 @@
 
 using namespace global;
 
-PageHost::PageHost(const RepoProject &project)
-    : QWidget(nullptr), ui(new Ui::PageHost), m_project(project)
+PageHost::PageHost(const RepoContext &context, const Project &project)
+    : QWidget(nullptr), ui(new Ui::PageHost), m_context(context), m_project(project)
 {
     ui->setupUi(this);
     ui->centerSplitter->setStretchFactor(1, 1);
@@ -61,7 +61,7 @@ PageHost::~PageHost()
 
 void PageHost::onActionPush()
 {
-    PushDialog dialog(this, m_project.absPath);
+    PushDialog dialog(this, m_context, m_project.absPath);
     if (dialog.exec()) {
         refresh();
     }

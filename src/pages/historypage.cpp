@@ -10,7 +10,7 @@
 #include "dialogs/resetdialog.h"
 #include "ui_historypage.h"
 
-HistoryPage::HistoryPage(QWidget *parent, const RepoProject &project)
+HistoryPage::HistoryPage(QWidget *parent, const Project &project)
     : QWidget(parent), ui(new Ui::HistoryPage), m_project(project)
 {
     ui->setupUi(this);

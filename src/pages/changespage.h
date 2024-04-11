@@ -11,6 +11,7 @@
 
 #include "global.h"
 #include "pages/historytablemodel.h"
+#include "repocontext.h"
 #include "widgets/QProgressIndicator.h"
 #include "widgets/diffscrollarea.h"
 
@@ -23,7 +24,7 @@ class ChangesPage : public QWidget
     Q_OBJECT
 
 public:
-    ChangesPage(QWidget *parent, const RepoProject &project);
+    ChangesPage(QWidget *parent, const Project &project);
     ~ChangesPage();
 
     void refresh();
@@ -45,7 +46,7 @@ private:
     Ui::ChangesPage *ui;
     QProgressIndicator *m_indicator;
 
-    RepoProject m_project;
+    Project m_project;
     QList<GitFile> m_stagedList;
     QList<GitFile> m_unstagedList;
     QList<DiffHunk> m_diffHunks;

@@ -11,6 +11,7 @@
 #include "historygraphdelegate.h"
 #include "historytablemodel.h"
 #include "reftreemodel.h"
+#include "repocontext.h"
 #include "widgets/QProgressIndicator.h"
 #include "widgets/diffscrollarea.h"
 
@@ -32,7 +33,7 @@ private:
     };
 
 public:
-    HistoryPage(QWidget *parent, const RepoProject &project);
+    HistoryPage(QWidget *parent, const Project &project);
     ~HistoryPage();
 
     void refresh(const HistorySelectionArg &arg = HistorySelectionArg());
@@ -67,7 +68,7 @@ private:
         QList<DiffHunk> hunks;
     };
 
-    RepoProject m_project;
+    Project m_project;
     Commit m_currentCommit;
     LogResult m_logResult;
     DetailResult m_detailResult;

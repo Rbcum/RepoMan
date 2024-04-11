@@ -16,15 +16,16 @@
 #include <QtConcurrent>
 
 #include "dialogs/cmddialog.h"
+#include "dialogs/repoinitdialog.h"
 #include "dialogs/reposyncdialog.h"
 #include "dialogs/switchmanifestdialog.h"
-#include "global.h"
 #include "pages/newtabpage.h"
 #include "ui_mainwindow.h"
 
 using namespace global;
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
+MainWindow::MainWindow(QString repoPath)
+    : QMainWindow(nullptr), ui(new Ui::MainWindow), m_context(repoPath)
 {
     ui->setupUi(this);
     move(screen()->geometry().center() - frameGeometry().center());
@@ -33,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(ui->actionFile_Open, &QAction::triggered, this, &MainWindow::onAction);
     connect(ui->actionFile_Configurations, &QAction::triggered, this, &MainWindow::onAction);
     connect(ui->actionFile_Exit, &QAction::triggered, this, &MainWindow::onAction);
+    connect(ui->actionRepo_Init, &QAction::triggered, this, &MainWindow::onAction);
     connect(ui->actionRepo_Switch_manifest, &QAction::triggered, this, &MainWindow::onAction);
     connect(ui->actionRepo_Start, &QAction::triggered, this, &MainWindow::onAction);
     connect(ui->actionRepo_Sync, &QAction::triggered, this, &MainWindow::onAction);
@@ -69,20 +71,21 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     // Tab
     connect(ui->tabWidget, &TabWidgetEx::tabAddRequested, this, [this] {
-        int newIndex = addTab(RepoProject(), true);
+        int newIndex = addTab(Project(), true);
         ui->tabWidget->setCurrentIndex(newIndex);
     });
     connect(ui->tabWidget, &TabWidgetEx::tabCloseRequested, this, [this](int index) {
         closeTab(index);
         if (ui->tabWidget->count() == 0) {
-            addTab(RepoProject(), true);
+            addTab(Project(), true);
         }
         saveTabs();
     });
 
-    // Init
-    openRepo();
-    restoreTabs();
+    if (m_context.isValid()) {
+        updateUI();
+        restoreTabs();
+    }
 }
 
 MainWindow::~MainWindow()
@@ -103,19 +106,24 @@ void MainWindow::onAction()
     } else if (action == ui->actionFile_Exit) {
         qApp->quit();
     } else if (action == ui->actionFile_Configurations) {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(global::getRepoSettings().fileName()));
+        QDesktopServices::openUrl(QUrl::fromLocalFile(m_context.settings().fileName()));
+    } else if (action == ui->actionRepo_Init) {
+        RepoInitDialog dialog(this);
+        if (dialog.exec()) {
+            openRepo(dialog.initDir());
+        }
     } else if (action == ui->actionRepo_Sync || action == m_actionRepoSync) {
-        openRepoSyncDialog();
+        onActionRepoSync();
     } else if (action == ui->actionRepo_Start) {
         onActionRepoStart();
     } else if (action == ui->actionRepo_Switch_manifest || action == m_actionRepoSwitchManifest) {
-        SwitchManifestDialog dialog(this);
-        int code = dialog.exec();
-        if (code == QDialog::Accepted) {
-            openRepo();
-        } else if (code == SwitchManifestDialog::OpenSync) {
-            openRepo();
-            openRepoSyncDialog();
+        SwitchManifestDialog dialog(this, m_context);
+        if (dialog.exec()) {
+            m_context.loadManifest();
+            updateUI();
+            if (dialog.syncAfterSwitch()) {
+                onActionRepoSync();
+            }
         }
     } else if (action == ui->actionHelp_About) {
         QMessageBox::about(this, "RepoMan", "Repo GUI front-end");
@@ -137,13 +145,16 @@ void MainWindow::onAction()
 void MainWindow::onProjectAction(void (PageHost::*func)())
 {
     int index = ui->tabWidget->currentIndex();
+    if (index < 0) {
+        return;
+    }
     auto data = ui->tabWidget->tabData(index).value<TabData>();
     if (!data.isNewTab) {
         (static_cast<PageHost *>(data.page)->*func)();
     }
 }
 
-int MainWindow::addTab(const RepoProject &project, bool isNewTab, int index)
+int MainWindow::addTab(const Project &project, bool isNewTab, int index)
 {
     QString title;
     TabData data;
@@ -151,12 +162,12 @@ int MainWindow::addTab(const RepoProject &project, bool isNewTab, int index)
     data.project = project;
     if (isNewTab) {
         title = "New tab";
-        auto page = new NewTabPage();
+        auto page = new NewTabPage(m_context);
         data.page = page;
         connect(page, &NewTabPage::projectDoubleClicked, this, &MainWindow::openProject);
     } else {
         title = project.path;
-        data.page = new PageHost(project);
+        data.page = new PageHost(m_context, project);
     }
     int newIndex;
     if (index != -1) {
@@ -175,7 +186,7 @@ void MainWindow::closeTab(int index)
     data.page->deleteLater();
 }
 
-void MainWindow::openProject(const RepoProject &project)
+void MainWindow::openProject(const Project &project)
 {
     int index = 0;
     int count = ui->tabWidget->count();
@@ -201,25 +212,61 @@ void MainWindow::saveTabs()
         value.append(data.project.path);
         if (i < count - 1) value.append(";");
     }
-    auto settings = global::getRepoSettings();
+
+    auto settings = m_context.settings();
     settings.setValue("tabs", value);
 }
 
 void MainWindow::restoreTabs()
 {
-    QString value = global::getRepoSettings().value("tabs").toString();
+    QString value = m_context.settings().value("tabs").toString();
     if (value.isEmpty()) {
-        addTab(RepoProject(), true);
+        addTab(Project(), true);
     } else {
         for (const QString &path : value.split(";")) {
-            addTab(manifest.projectMap.value(path));
+            addTab(m_context.manifest().projectMap.value(path));
         }
     }
 }
 
-void MainWindow::openRepoSyncDialog()
+void MainWindow::closeAllTabs()
 {
-    QList<RepoProject> projects;
+    while (ui->tabWidget->count()) {
+        closeTab(0);
+    }
+}
+
+void MainWindow::openRepo(const QString &path)
+{
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle("Open Repo");
+    msgBox.setText("Where to open this repo in?");
+    msgBox.setIcon(QMessageBox::Question);
+    auto currentBtn = msgBox.addButton("Current Window", QMessageBox::ActionRole);
+    auto newBtn = msgBox.addButton("New Window", QMessageBox::ActionRole);
+    msgBox.addButton(QMessageBox::Cancel);
+    msgBox.setDefaultButton(currentBtn);
+    msgBox.exec();
+    if (msgBox.clickedButton() == currentBtn) {
+        m_context = RepoContext(path);
+        updateUI();
+        closeAllTabs();
+        restoreTabs();
+    } else if (msgBox.clickedButton() == newBtn) {
+        auto win = new MainWindow(path);
+        win->show();
+    }
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    QMainWindow::closeEvent(event);
+    QSettings().setValue("cwd", m_context.isValid() ? m_context.repoPath() : "");
+}
+
+void MainWindow::onActionRepoSync()
+{
+    QList<Project> projects;
     int currentIndex = -1;
     for (int i = 0; i < ui->tabWidget->count(); ++i) {
         auto data = ui->tabWidget->tabData(i).value<TabData>();
@@ -230,13 +277,13 @@ void MainWindow::openRepoSyncDialog()
             }
         }
     }
-    RepoSyncDialog dialog(this, currentIndex, projects);
+    RepoSyncDialog dialog(this, m_context, currentIndex, projects);
     dialog.exec();
 }
 
 void MainWindow::onActionRepoStart()
 {
-    QString targetManifest = QFileInfo(manifest.filePath).symLinkTarget();
+    QString targetManifest = QFileInfo(m_context.manifest().filePath).symLinkTarget();
     QString defName = QFileInfo(targetManifest).fileName().split(".").first();
 
     QInputDialog inputDlg(this);
@@ -249,14 +296,14 @@ void MainWindow::onActionRepoStart()
         QString branch = inputDlg.textValue();
         if (!branch.isEmpty()) {
             QString cmd = QString("repo start --all %1").arg(branch);
-            CmdDialog::execute(this, cmd, cwd);
+            CmdDialog::execute(this, cmd, m_context.repoPath());
         }
     }
 }
 
 void MainWindow::onActionOpen()
 {
-    QString path = QFileDialog::getExistingDirectory(this, "Open repo", cwd);
+    QString path = QFileDialog::getExistingDirectory(this, "Open repo", m_context.repoPath());
     if (path.isEmpty()) {
         return;
     }
@@ -265,68 +312,15 @@ void MainWindow::onActionOpen()
         msgBox.warning(this, "Error", path + " is not a valid repo");
         return;
     }
-    cwd = path;
-    auto settings = global::getRepoSettings();
-    settings.setValue("cwd", cwd);
-
-    openRepo();
-}
-
-void MainWindow::openRepo()
-{
-    if (cwd.isEmpty()) {
-        return;
-    }
-
-    parseManifest(QDir::cleanPath(cwd + "/.repo/manifest.xml"));
-    updateUI();
+    openRepo(path);
 }
 
 void MainWindow::updateUI()
 {
-    setWindowTitle(QString("%1 - %2").arg(cwd, QApplication::applicationName()));
+    setWindowTitle(QString("%1 - %2").arg(m_context.repoPath(), QApplication::applicationName()));
 
-    QString targetManifest = QFileInfo(manifest.filePath).symLinkTarget();
+    QString targetManifest = QFileInfo(m_context.manifest().filePath).symLinkTarget();
     m_statusLabel->setText(
-        QString("  %1  |  %2").arg(QFileInfo(targetManifest).fileName(), manifest.revision));
-}
-
-void MainWindow::parseManifest(const QString &manPath)
-{
-    QFile manFile(manPath);
-    QDomDocument doc("");
-    if (!manFile.open(QIODevice::ReadOnly)) return;
-    if (!doc.setContent(&manFile)) {
-        manFile.close();
-        return;
-    }
-    manFile.close();
-
-    manifest = {};
-    manifest.filePath = manPath;
-
-    QDomNode n = doc.documentElement().firstChild();
-    while (!n.isNull()) {
-        QDomElement e = n.toElement();
-        if (e.nodeName() == "include") {
-            QString manPath2 = QDir::cleanPath(cwd + "/.repo/manifests/" + e.attribute("name"));
-            parseManifest(manPath2);
-        } else if (e.nodeName() == "default") {
-            manifest.remote = e.attribute("remote");
-            manifest.revision = e.attribute("revision");
-            manifest.syncJ = e.attribute("sync-j").toInt();
-        } else if (e.nodeName() == "project") {
-            QString name = e.attribute("name");
-            QString path = e.attribute("path");
-            if (path.isEmpty()) path = name;
-            QString absPath = QDir::cleanPath(cwd + "/" + path);
-            manifest.projectList.emplace_back(name, path, absPath);
-            manifest.projectMap.insert(path, RepoProject(name, path, absPath));
-        }
-        n = n.nextSibling();
-    }
-    std::sort(manifest.projectList.begin(), manifest.projectList.end(),
-        [](const RepoProject &p1, const RepoProject &p2) {
-            return p1.path < p2.path;
-        });
+        QString("  %1  |  %2")
+            .arg(QFileInfo(targetManifest).fileName(), m_context.manifest().revision));
 }

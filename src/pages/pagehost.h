@@ -5,6 +5,7 @@
 
 #include "changespage.h"
 #include "historypage.h"
+#include "repocontext.h"
 
 namespace Ui {
     class PageHost;
@@ -15,7 +16,7 @@ class PageHost : public QWidget
     Q_OBJECT
 
 public:
-    explicit PageHost(const RepoProject &project);
+    explicit PageHost(const RepoContext &context, const Project &project);
     ~PageHost();
 
     void onActionPush();
@@ -35,7 +36,8 @@ private:
     ChangesPage *m_changesPage;
     HistoryPage *m_historyPage;
 
-    RepoProject m_project;
+    RepoContext m_context;
+    Project m_project;
 };
 
 #endif  // PAGEHOST_H

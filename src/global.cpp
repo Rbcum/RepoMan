@@ -1,22 +1,10 @@
 #include "global.h"
 
 #include <QDir>
+#include <QDomDocument>
 
 namespace global {
-    Manifest manifest;
     int commitPageSize = 100;
-    QString cwd;
-
-    QSettings getRepoSettings()
-    {
-        const QString &confFile = QDir::cleanPath(cwd + "/repoman.conf");
-        return QSettings(confFile, QSettings::NativeFormat);
-    }
-
-    QSettings getGlobalSettings()
-    {
-        return QSettings();
-    }
 
     int getCmdCode(const QString &cmd, const QString &dir)
     {
@@ -38,5 +26,4 @@ namespace global {
         if (!process.waitForFinished(-1) || process.error() == QProcess::FailedToStart) return "";
         return process.readAll();
     }
-
 }  // namespace global

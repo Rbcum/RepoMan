@@ -4,6 +4,7 @@
 #include <QAbstractItemModel>
 #include <QDialog>
 
+#include "repocontext.h"
 #include "widgets/QProgressIndicator.h"
 
 namespace Ui {
@@ -69,13 +70,9 @@ class SwitchManifestDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit SwitchManifestDialog(QWidget *parent = nullptr);
+    explicit SwitchManifestDialog(QWidget *parent, const RepoContext &context);
     ~SwitchManifestDialog();
-
-    enum DialogCode
-    {
-        OpenSync = QDialog::Accepted + 1
-    };
+    bool syncAfterSwitch();
 
 private slots:
     void onFileDoubleClicked(const QModelIndex &index);
@@ -92,6 +89,7 @@ private:
     };
 
     Ui::SwitchManifestDialog *ui;
+    RepoContext m_context;
     QProgressIndicator *m_indicator;
 
     FileTreeModel *m_model;
