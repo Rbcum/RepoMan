@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>600</width>
-    <height>356</height>
+    <height>354</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -120,25 +120,34 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1">
-        <item>
+       <layout class="QGridLayout" name="gridLayout">
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <item row="0" column="0">
          <widget class="QLabel" name="label">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
-           <string>Local:     </string>
+           <string>Local: </string>
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QComboBox" name="localBranchBox"/>
+        <item row="0" column="1">
+         <widget class="QComboBox" name="localBranchBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
         </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0,1">
-        <property name="spacing">
-         <number>0</number>
-        </property>
-        <item>
+        <item row="1" column="0">
          <widget class="QLabel" name="label_3">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -147,11 +156,11 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>Remote:  </string>
+           <string>Remote:</string>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="1" column="1">
          <widget class="QComboBox" name="targetBranchBox">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
