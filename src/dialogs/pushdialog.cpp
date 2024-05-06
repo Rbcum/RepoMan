@@ -7,12 +7,16 @@
 
 #include "cmddialog.h"
 #include "global.h"
+#include "themes/theme.h"
 #include "ui_pushdialog.h"
 
 PushDialog::PushDialog(QWidget *parent, const RepoContext &context, const QString &projectPath)
     : QDialog(parent), ui(new Ui::PushDialog), m_context(context), m_projectPath(projectPath)
 {
     ui->setupUi(this);
+    ui->urlTextEdit->setStyleSheet(
+        QString("QPlainTextEdit {background: transparent; border: 1px solid %1}")
+            .arg(utils::borderColor().name()));
     m_indicator = new QProgressIndicator(this);
 
     QString confFile = QDir::cleanPath(m_projectPath + "/.git/config");

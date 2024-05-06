@@ -6,14 +6,15 @@
 #include <QSettings>
 
 #include "cmddialog.h"
+#include "themes/icon.h"
 #include "ui_repoinitdialog.h"
 
 RepoInitDialog::RepoInitDialog(QWidget *parent) : QDialog(parent), ui(new Ui::RepoInitDialog)
 {
     ui->setupUi(this);
     ui->urlEdit->setFocus();
-    mFolderAction = ui->dirEdit->addAction(
-        QIcon("://resources/action_folder.svg"), QLineEdit::TrailingPosition);
+    auto folderIcon = utils::Icon({{":/icons/folder.png", utils::Theme::IconsBaseColor}}).icon();
+    mFolderAction = ui->dirEdit->addAction(folderIcon, QLineEdit::TrailingPosition);
     connect(mFolderAction, &QAction::triggered, this, [this]() {
         QString path = QFileDialog::getExistingDirectory(this, "Select Init Directory");
         if (path.isEmpty()) {

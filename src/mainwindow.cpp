@@ -20,9 +20,12 @@
 #include "dialogs/reposyncdialog.h"
 #include "dialogs/switchmanifestdialog.h"
 #include "pages/newtabpage.h"
+#include "themes/icon.h"
+#include "themes/theme.h"
 #include "ui_mainwindow.h"
 
 using namespace global;
+using namespace utils;
 
 MainWindow::MainWindow(QString repoPath)
     : QMainWindow(nullptr), ui(new Ui::MainWindow), m_context(repoPath)
@@ -44,26 +47,34 @@ MainWindow::MainWindow(QString repoPath)
     // ToolBar
     ui->toolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     m_actionRepoSwitchManifest = ui->toolBar->addAction(
-        QIcon("://resources/icon_switch_manifest.svg"), "Manifest", this, &MainWindow::onAction);
+        Icon({{":/icons/switch-manifest.png", Theme::IconsBaseColor}}).icon(), "Manifest", this,
+        &MainWindow::onAction);
     m_actionRepoSwitchManifest->setToolTip("Switch Manifest");
-    m_actionRepoSync = ui->toolBar->addAction(
-        QIcon("://resources/icon_sync.svg"), "Sync", this, &MainWindow::onAction);
+    m_actionRepoSync =
+        ui->toolBar->addAction(Icon({{":/icons/sync.png", Theme::IconsBaseColor}}).icon(), "Sync",
+            this, &MainWindow::onAction);
     m_actionRepoSync->setToolTip("Repo Sync");
     ui->toolBar->widgetForAction(ui->toolBar->addWidget(new QWidget()))->setFixedSize(40, 0);
-    m_actionPush = ui->toolBar->addAction(
-        QIcon("://resources/action_push.svg"), "Push", this, &MainWindow::onAction);
-    m_actionPull = ui->toolBar->addAction(
-        QIcon("://resources/action_pull.svg"), "Pull", this, &MainWindow::onAction);
-    m_actionFetch = ui->toolBar->addAction(
-        QIcon("://resources/action_fetch.svg"), "Fetch", this, &MainWindow::onAction);
-    m_actionClean = ui->toolBar->addAction(
-        QIcon("://resources/action_clean.svg"), "Clean", this, &MainWindow::onAction);
+    m_actionPush =
+        ui->toolBar->addAction(Icon({{":/icons/push.png", Theme::IconsBaseColor}}).icon(), "Push",
+            this, &MainWindow::onAction);
+    m_actionPull =
+        ui->toolBar->addAction(Icon({{":/icons/pull.png", Theme::IconsBaseColor}}).icon(), "Pull",
+            this, &MainWindow::onAction);
+    m_actionFetch =
+        ui->toolBar->addAction(Icon({{":/icons/fetch.png", Theme::IconsBaseColor}}).icon(), "Fetch",
+            this, &MainWindow::onAction);
+    m_actionClean =
+        ui->toolBar->addAction(Icon({{":/icons/clean.png", Theme::IconsBaseColor}}).icon(), "Clean",
+            this, &MainWindow::onAction);
     ui->toolBar->widgetForAction(ui->toolBar->addWidget(new QWidget()))
         ->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    m_actionTerm = ui->toolBar->addAction(
-        QIcon("://resources/action_term.svg"), "Terminal", this, &MainWindow::onAction);
-    m_actionFolder = ui->toolBar->addAction(
-        QIcon("://resources/action_folder.svg"), "Explorer", this, &MainWindow::onAction);
+    m_actionTerm =
+        ui->toolBar->addAction(Icon({{":/icons/term.png", Theme::IconsBaseColor}}).icon(),
+            "Terminal", this, &MainWindow::onAction);
+    m_actionFolder =
+        ui->toolBar->addAction(Icon({{":/icons/folder.png", Theme::IconsBaseColor}}).icon(),
+            "Explorer", this, &MainWindow::onAction);
 
     // StatusBar
     m_statusLabel = new QLabel(this);

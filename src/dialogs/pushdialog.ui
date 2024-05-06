@@ -78,9 +78,6 @@
           <height>50</height>
          </size>
         </property>
-        <property name="styleSheet">
-         <string notr="true">QPlainTextEdit {background-color: #F0F0F0;}</string>
-        </property>
         <property name="verticalScrollBarPolicy">
          <enum>Qt::ScrollBarAlwaysOff</enum>
         </property>

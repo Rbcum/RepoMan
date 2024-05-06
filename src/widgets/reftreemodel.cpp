@@ -4,6 +4,10 @@
 #include <QFont>
 #include <QIcon>
 
+#include "global.h"
+#include "themes/icon.h"
+#include "themes/theme.h"
+
 RefTreeModel::RefTreeModel(QObject *parent)
     : QAbstractItemModel(parent), m_rootItem(new RefTreeItem)
 {
@@ -89,24 +93,18 @@ QVariant RefTreeModel::data(const QModelIndex &index, int role) const
             }
             break;
         case Qt::SizeHintRole:
-            if (item->type == RefTreeItem::Group) {
-                return QSize(0, 36);
-            } else {
-                return QSize(0, 28);
-            }
             break;
         case Qt::DecorationRole:
-            if (item->type == RefTreeItem::Group) {
-                switch (item->row) {
-                    case RefTreeItem::Branch:
-                        return QIcon("://resources/icon_branch.svg");
-                    case RefTreeItem::Remote:
-                        return QIcon("://resources/icon_cloud.svg");
-                    case RefTreeItem::Tag:
-                        return QIcon("://resources/icon_tag.svg");
-                    default:
-                        Q_UNREACHABLE();
-                }
+            using namespace utils;
+            switch (item->type) {
+                case RefTreeItem::Branch:
+                    return Icon({{":/icons/branch.png", Theme::IconsBaseColor}}).icon();
+                case RefTreeItem::Remote:
+                    return Icon({{":/icons/cloud.png", Theme::IconsBaseColor}}).icon();
+                case RefTreeItem::Tag:
+                    return Icon({{":/icons/tag.png", Theme::IconsBaseColor}}).icon();
+                default:
+                    break;
             }
             break;
     }
@@ -120,7 +118,7 @@ Qt::ItemFlags RefTreeModel::flags(const QModelIndex &index) const
     Qt::ItemFlags flags = QAbstractItemModel::flags(index);
     RefTreeItem *item = static_cast<RefTreeItem *>(index.internalPointer());
     if (item->type == RefTreeItem::Group || item->type == RefTreeItem::General) {
-        flags &= ~Qt::ItemIsEnabled;
+        flags &= ~Qt::ItemIsSelectable;
     }
     return flags;
 }

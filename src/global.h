@@ -4,7 +4,6 @@
 #include <QList>
 #include <QMap>
 #include <QProcess>
-#include <QSettings>
 #include <QString>
 
 struct Commit

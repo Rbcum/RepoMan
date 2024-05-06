@@ -5,8 +5,9 @@
 #include <QPainterPath>
 
 #include "historytablemodel.h"
+#include "themes/theme.h"
 
-//#define DEBUG_DRAW
+// #define DEBUG_DRAW
 
 HistoryGraphDelegate::HistoryGraphDelegate(QObject *parent) : QStyledItemDelegate(parent)
 {
@@ -162,12 +163,14 @@ void HistoryGraphDelegate::paintBadges(QPainter *painter, int laneId, const Comm
     int width = painter->fontMetrics().horizontalAdvance(text) + nailWidth + lMargin + rMargin;
     QRectF badgeRect(contentRect.x() + 0.5, contentRect.top() + vMargin + 0.5, width,
         contentRect.height() - vMargin * 2 - 1);
+    QColor borderColor = utils::creatorTheme()->color(utils::Theme::BadgeBorderColor);
+    QColor backgroundColor = utils::creatorTheme()->color(utils::Theme::BadgeBackgoundColor);
 
     // Badge
     QPainterPath path;
     path.addRoundedRect(badgeRect, cornerRadius, cornerRadius);
-    painter->setPen(QPen(QColor(0xAAAAAA), 1));
-    painter->fillPath(path, QColor(0xF8F6F6));
+    painter->setPen(QPen(borderColor, 1));
+    painter->fillPath(path, backgroundColor);
     painter->drawPath(path);
 
     // Nail
@@ -206,12 +209,12 @@ void HistoryGraphDelegate::paintBadges(QPainter *painter, int laneId, const Comm
     }
 
     // Text
-    painter->setPen(Qt::black);
     QRectF textRect = badgeRect.adjusted(nailWidth + lMargin, 0, -rMargin, 0);
+    painter->setPen(qApp->palette().color(QPalette::WindowText));
     painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, text);
 
     // Stacks
-    painter->setPen(QPen(QColor(0xAAAAAA), 1));
+    painter->setPen(QPen(borderColor, 1));
     QRectF stackRect = badgeRect.adjusted(width, 0, badgeSpacing, 0);
     for (int i = 1; i < count; ++i) {
         path.clear();
@@ -229,7 +232,7 @@ void HistoryGraphDelegate::paintBadges(QPainter *painter, int laneId, const Comm
             cornerRadius * 2, cornerRadius * 2, -90, 90);
         path.closeSubpath();
 
-        painter->fillPath(path, QColor(0xF8F6F6));
+        painter->fillPath(path, backgroundColor);
         painter->drawPath(path);
 
         stackRect.translate(badgeSpacing, 0);

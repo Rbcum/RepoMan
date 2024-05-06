@@ -4,6 +4,10 @@
 #include <QTreeView>
 
 #include "reftreemodel.h"
+#include "themes/icon.h"
+#include "themes/theme.h"
+
+using namespace utils;
 
 RefTreeDelegate::RefTreeDelegate(QObject *parent, QTreeView *treeView)
     : QStyledItemDelegate{parent},
@@ -20,24 +24,21 @@ void RefTreeDelegate::paint(
     RefTreeItem *item = static_cast<RefTreeItem *>(index.internalPointer());
     QStyleOptionViewItem opt = option;
     opt.state &= ~QStyle::State_HasFocus;
-    if (item->type == RefTreeItem::Group) {
-        opt.font.setPointSize(12);
-        opt.font.setBold(true);
-        opt.palette.setColor(QPalette::All, QPalette::Text, QColor(0x747474));
-    } else {
+    auto textColor = creatorTheme()->color(Theme::PaletteText);
+    opt.palette.setColor(QPalette::All, QPalette::Text, textColor);
+    opt.palette.setColor(QPalette::All, QPalette::HighlightedText, textColor);
+    if (item->type != RefTreeItem::Group) {
         opt.font.setPointSize(10);
         if (item->type == RefTreeItem::Branch) {
             if (item->data == m_currentBranch) {
                 opt.font.setBold(true);
             }
         }
-        opt.palette.setColor(QPalette::All, QPalette::Text, QColor(Qt::black));
-        opt.palette.setColor(QPalette::All, QPalette::HighlightedText, QColor(Qt::black));
     }
     QStyledItemDelegate::paint(painter, opt, index);
 
     if (item->type == RefTreeItem::Group) {
-        QIcon refreshIcon(":/resources/icon_refresh.svg");
+        QIcon refreshIcon = Icon({{":/icons/refresh.png", Theme::IconsBaseColor}}).icon();
         QRect iconRect = opt.rect.adjusted(0, 8, -5, -8);
         switch (item->row) {
             case RefTreeItem::Branch:

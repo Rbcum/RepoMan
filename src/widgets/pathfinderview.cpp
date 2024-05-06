@@ -7,6 +7,8 @@
 #include <QScrollBar>
 #include <QTimer>
 
+#include "themes/theme.h"
+
 PathFinderView::PathFinderView(QWidget *parent) : QScrollArea(parent)
 {
     setFixedHeight(30);
@@ -85,9 +87,12 @@ void PathFinderView::addSegmentView(const QString &text, int index)
 {
     auto segView = new QPushButton(this);
     segView->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
-    segView->setStyleSheet("QPushButton {padding-left: 8px; padding-right: 8px; border: none}"
-                           "QPushButton:hover {background-color: #DDD;} "
-                           "QPushButton:pressed {background-color: #CCC;}");
+    segView->setStyleSheet(
+        QString("QPushButton {padding-left: 8px; padding-right: 8px; border: none}"
+                "QPushButton:hover {background-color: %1;} "
+                "QPushButton:pressed {background-color: %2;}")
+            .arg(utils::creatorTheme()->color(utils::Theme::PanelItemHovered).name(),
+                utils::creatorTheme()->color(utils::Theme::PanelItemPressed).name()));
     segView->setText(text);
     segView->setProperty("index", index);
     connect(segView, &QPushButton::clicked, this, &PathFinderView::onPathSegmentClicked);

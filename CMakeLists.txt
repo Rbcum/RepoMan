@@ -18,8 +18,8 @@ set(PROJECT_SOURCES
         src/main.cpp
         src/busystatedisabler.h src/busystatedisabler.cpp
         src/mainwindow.h src/mainwindow.cpp
-        src/reftreemodel.h src/reftreemodel.cpp
-        src/reftreedelegate.h src/reftreedelegate.cpp
+        src/themes/theme.cpp src/themes/theme.h src/themes/theme_p.h
+        src/themes/icon.cpp src/themes/icon.h
         src/dialogs/cmddialog.h src/dialogs/cmddialog.cpp
         src/dialogs/reposyncdialog.h src/dialogs/reposyncdialog.cpp
         src/dialogs/settingsdialog.h src/dialogs/settingsdialog.cpp
@@ -44,6 +44,8 @@ set(PROJECT_SOURCES
         src/widgets/diffscrollarea.h src/widgets/diffscrollarea.cpp
         src/widgets/commitdetailscrollarea.h src/widgets/commitdetailscrollarea.cpp
         src/widgets/reftreeview.h src/widgets/reftreeview.cpp
+        src/widgets/reftreemodel.h src/widgets/reftreemodel.cpp
+        src/widgets/reftreedelegate.h src/widgets/reftreedelegate.cpp
         src/widgets/tabwidgetex.h src/widgets/tabwidgetex.cpp
         src/widgets/pathfinderview.h src/widgets/pathfinderview.cpp
         src/dialogs/repoinitdialog.h src/dialogs/repoinitdialog.cpp

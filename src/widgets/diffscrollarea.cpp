@@ -1,7 +1,8 @@
 #include "diffscrollarea.h"
 
-#include <QCoreApplication>
+#include <QApplication>
 #include <QPainter>
+#include <QPalette>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QScrollBar>
@@ -11,6 +12,9 @@
 #include <QVBoxLayout>
 #include <QtConcurrent>
 
+#include "global.h"
+#include "themes/theme.h"
+
 // Performance issue, consider using QListView
 #define HUNK_MAX_LINES 120
 
@@ -18,9 +22,12 @@
 #define LN_EMPTY 0
 #define LN_CHOPPED -1
 
+using namespace utils;
+
 DiffScrollArea::DiffScrollArea(QWidget *parent) : QScrollArea(parent)
 {
-    viewport()->setStyleSheet("QWidget#diffScrollAreaWidget{background:White;}");
+    QString bg = palette().color(QPalette::Base).name();
+    viewport()->setStyleSheet(QString("QWidget#detailScrollAreaWidget {background: %1;}").arg(bg));
 }
 
 void DiffScrollArea::setDiffHunks(const QList<DiffHunk> hunks)
@@ -55,8 +62,9 @@ DiffTextEdit::DiffTextEdit(DiffScrollArea *parent) : QPlainTextEdit(parent), m_s
     m_customFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     m_customFont.setPointSize(9);
     setFont(m_customFont);
-    setStyleSheet("QPlainTextEdit{border-bottom: 1px solid #B8B8B8; border-top: 1px solid #B8B8B8;"
-                  "border-right: none; border-left: none;}");
+    setStyleSheet(QString("QPlainTextEdit {border-bottom: 1px solid %1; border-top: 1px solid %1;"
+                          "border-right: none; border-left: none;}")
+                      .arg(borderColor().name()));
     setLineWrapMode(QPlainTextEdit::NoWrap);
     setReadOnly(true);
 
@@ -142,15 +150,18 @@ void DiffTextEdit::resizeEvent(QResizeEvent *e)
 void DiffTextEdit::highlightDiffLines()
 {
     QList<QTextEdit::ExtraSelection> extraSelections;
-
     moveCursor(QTextCursor::Start);
+
+    static QColor colorAdd = creatorTheme()->color(Theme::DiffLineAdd);
+    static QColor colorRemove = creatorTheme()->color(Theme::DiffLineRemove);
+
     for (int i = 0; i < m_hunk.lines.size(); ++i) {
         QString line = m_hunk.lines.at(i);
         QColor color;
         if (line.startsWith("+")) {
-            color = QColor(Qt::green).lighter(185);
+            color = colorAdd;
         } else if (line.startsWith("-")) {
-            color = QColor(Qt::red).lighter(185);
+            color = colorRemove;
         }
         if (color.isValid()) {
             QTextEdit::ExtraSelection selection;
@@ -169,12 +180,11 @@ void DiffTextEdit::lineNumberAreaPaintEvent(QPaintEvent *event)
 {
     QPainter painter(m_lineNumberArea);
     painter.setFont(m_customFont);
-    painter.setPen(Qt::black);
-    painter.fillRect(event->rect(), QColor(0xF8F9FA));
+    painter.fillRect(event->rect(), creatorTheme()->color(Theme::LineNumberBackground));
     if (horizontalScrollBar()->isVisible()) {
         const int sbHeight = horizontalScrollBar()->height();
         painter.fillRect(lineNumberAreaWidth() - 1, contentsRect().bottom() - sbHeight, 1, sbHeight,
-            QColor(0xB8B8B8));
+            borderColor());
     }
 
     QTextBlock block = firstVisibleBlock();

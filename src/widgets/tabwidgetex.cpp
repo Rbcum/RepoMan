@@ -1,7 +1,46 @@
 #include "tabwidgetex.h"
 
+#include <qstylefactory.h>
+
+#include <QApplication>
 #include <QDebug>
 #include <QMouseEvent>
+#include <QPainter>
+#include <QStyleOption>
+
+#include "themes/icon.h"
+#include "themes/theme.h"
+
+using namespace utils;
+
+class TabBarStyle : public QProxyStyle
+{
+public:
+    void drawPrimitive(
+        PrimitiveElement pe, const QStyleOption *opt, QPainter *p, const QWidget *w) const override
+    {
+        if (pe == QStyle::PE_PanelButtonCommand || pe == QStyle::PE_PanelButtonTool) {  // button bg
+            if (opt->state & State_MouseOver) {
+                p->save();
+                bool isDown = (opt->state & State_Sunken) || (opt->state & State_On);
+                p->fillRect(opt->rect, creatorTheme()->color(isDown ? Theme::PanelItemPressed
+                                                                    : Theme::PanelItemHovered));
+                p->restore();
+            }
+            return;
+        }
+        QProxyStyle::drawPrimitive(pe, opt, p, w);
+    }
+
+    QIcon standardIcon(StandardPixmap standardIcon, const QStyleOption *option,
+        const QWidget *widget) const override
+    {
+        if (standardIcon == QStyle::SP_DialogCloseButton) {
+            return Icon({{":/icons/close.png", Theme::IconsBaseColor}}).icon();
+        }
+        return QProxyStyle::standardIcon(standardIcon, option, widget);
+    }
+};
 
 TabWidgetEx::TabWidgetEx(QWidget *parent) : QTabWidget(parent)
 {
@@ -20,10 +59,12 @@ QVariant TabWidgetEx::tabData(int index) const
 
 TabBarEx::TabBarEx(QWidget *parent) : QTabBar(parent), m_hoverIndex(-1)
 {
+    setStyle(new TabBarStyle());
+    setMouseTracking(true);
+
     m_addButton = new QToolButton(this);
-    m_addButton->setIcon(QIcon("://resources/icon_add.svg"));
-    m_addButton->setStyleSheet("QToolButton {border: none;} QToolButton:hover {background-color: "
-                               "#DDD;} QToolButton:pressed {background-color: #CCC;}");
+    m_addButton->setIcon(Icon({{":/icons/add.png", Theme::IconsBaseColor}}).icon());
+
     connect(m_addButton, &QPushButton::clicked, this, [this] {
         TabWidgetEx *parent = static_cast<TabWidgetEx *>(parentWidget());
         emit parent->tabAddRequested();
@@ -47,6 +88,13 @@ void TabBarEx::tabLayoutChange()
 {
     QTabBar::tabLayoutChange();
     layoutAddButton();
+}
+
+QSize TabBarEx::tabSizeHint(int index) const
+{
+    auto size = QTabBar::tabSizeHint(index);
+    size.setWidth(qMax(size.width(), 150));
+    return size;
 }
 
 void TabBarEx::layoutAddButton()

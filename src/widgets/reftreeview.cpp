@@ -9,10 +9,17 @@
 #include "dialogs/cmddialog.h"
 #include "dialogs/deleterefdialog.h"
 #include "global.h"
+#include "themes/theme.h"
 
 RefTreeView::RefTreeView(QWidget *parent)
     : QTreeView(parent), m_remotesLoaded(false), m_tagsLoaded(false)
 {
+    setStyleSheet(QString("QTreeView {background-color: transparent;}"
+                          "QTreeView::item {height: 28px;}"
+                          "QTreeView::item:focus {border:none;}"
+                          "QTreeView::item:selected {background: %1;}"
+                          "QTreeView::branch:selected {background: %1;}")
+                      .arg(utils::creatorTheme()->color(utils::Theme::PanelItemPressed).name()));
     m_model = new RefTreeModel(this);
     m_delegate = new RefTreeDelegate(this, this);
 

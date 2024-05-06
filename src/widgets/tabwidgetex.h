@@ -2,6 +2,7 @@
 #define TABWIDGETEX_H
 
 #include <QObject>
+#include <QProxyStyle>
 #include <QPushButton>
 #include <QTabBar>
 #include <QTabWidget>
@@ -34,6 +35,7 @@ protected:
     void leaveEvent(QEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void tabLayoutChange() override;
+    QSize tabSizeHint(int index) const override;
 
 private slots:
     void onTabChanged(int index);

@@ -84,19 +84,19 @@ void ProjectListDelegate::paint(
     const int nameHeight = QFontMetrics(font).height();
     const int top = (rect.height() - pathHeight - LINE_SPACING - nameHeight) / 2;
     const Project &project = index.data(Qt::UserRole).value<Project>();
-
-    // Name
-    QPalette::ColorRole textRole =
+    const QPalette::ColorRole textRole =
         opt.state & QStyle::State_Selected ? QPalette::HighlightedText : QPalette::Text;
+
+    // Path
     font.setPointSize(PATH_FONT_SIZE);
     painter->setFont(font);
     style->drawItemText(painter, rect.adjusted(10, top, -10, 0), Qt::AlignTop, opt.palette, true,
         project.path, textRole);
 
-    // Path
-    textRole = opt.state & QStyle::State_Selected ? QPalette::HighlightedText : QPalette::Dark;
+    // Name
     font.setPointSize(NAME_FONT_SIZE);
     painter->setFont(font);
+    opt.palette.setColor(QPalette::Text, Qt::gray);
     style->drawItemText(painter, rect.adjusted(10, top + pathHeight + LINE_SPACING, -10, 0),
         Qt::AlignTop, opt.palette, true, project.name, textRole);
 }

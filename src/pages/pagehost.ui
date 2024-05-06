@@ -39,28 +39,11 @@
            </property>
            <property name="font">
             <font>
-             <pointsize>-1</pointsize>
              <bold>false</bold>
             </font>
            </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-       border:none;
-       outline: none;
-       text-align: left;
-       padding-left: 14px;
-       font-size: 14px;
-}
-QPushButton:checked{
-       background:LightGray;
-}</string>
-           </property>
            <property name="text">
             <string>Changes</string>
-           </property>
-           <property name="icon">
-            <iconset resource="../resources.qrc">
-             <normaloff>:/resources/action_changes.svg</normaloff>:/resources/action_changes.svg</iconset>
            </property>
            <property name="iconSize">
             <size>
@@ -92,28 +75,11 @@ QPushButton:checked{
            </property>
            <property name="font">
             <font>
-             <pointsize>-1</pointsize>
              <bold>false</bold>
             </font>
            </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-       border:none;
-       outline: none;
-       text-align: left;
-       padding-left: 14px;
-       font-size: 14px;
-}
-QPushButton:checked{
-       background:LightGray;
-}</string>
-           </property>
            <property name="text">
             <string>History</string>
-           </property>
-           <property name="icon">
-            <iconset resource="../resources.qrc">
-             <normaloff>:/resources/action_history.svg</normaloff>:/resources/action_history.svg</iconset>
            </property>
            <property name="iconSize">
             <size>
@@ -145,23 +111,6 @@ QPushButton:checked{
          </property>
          <property name="autoFillBackground">
           <bool>false</bool>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QTreeView {
-		background-color: #EFEFEF;
-}
-QTreeView::item {
-       height: 28px;
-}
-QTreeView::item:focus {
-       border:none;
-}
-QTreeView::item:selected {
-       background: LightGray;
-}
-QTreeView::branch:selected {
-   		background: LightGray;
-}</string>
          </property>
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -213,8 +162,6 @@ QTreeView::branch:selected {
    <header>widgets/reftreeview.h</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

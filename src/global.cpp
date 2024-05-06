@@ -1,7 +1,6 @@
 #include "global.h"
 
 #include <QDir>
-#include <QDomDocument>
 
 namespace global {
     int commitPageSize = 100;
@@ -26,4 +25,5 @@ namespace global {
         if (!process.waitForFinished(-1) || process.error() == QProcess::FailedToStart) return "";
         return process.readAll();
     }
+
 }  // namespace global

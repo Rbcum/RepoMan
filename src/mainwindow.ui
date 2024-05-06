@@ -30,23 +30,7 @@
     <item>
      <widget class="TabWidgetEx" name="tabWidget">
       <property name="styleSheet">
-       <string notr="true">QTabBar::tab {
-    min-width: 20ex;
-}
-
-QTabBar::close-button {
-    image: url(:/resources/icon_close.svg);
-    padding: 2px;
-    subcontrol-position: right;
-}
-
-QTabBar::close-button:hover {
-    background-color: #DDD;
-}
-
-QTabBar::close-button:pressed {
-    background-color: #CCC;
-}</string>
+       <string notr="true"/>
       </property>
       <property name="tabShape">
        <enum>QTabWidget::Rounded</enum>

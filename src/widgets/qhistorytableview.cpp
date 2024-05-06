@@ -8,6 +8,8 @@
 #include <QResizeEvent>
 #include <QScrollBar>
 
+#include "themes/theme.h"
+
 const QStringList QHistoryTableView::HEADERS = {"Graph", "Subject", "Date", "Author", "Hash"};
 
 QHistoryTableView::QHistoryTableView(QWidget *parent)
@@ -24,7 +26,9 @@ QHistoryTableView::QHistoryTableView(QWidget *parent)
 
     m_loadingFrame = new QFrame(this);
     m_loadingFrame->hide();
-    m_loadingFrame->setStyleSheet("* {font-size: 14px;} QFrame {background-color: #B2BABC;}");
+    m_loadingFrame->setStyleSheet(
+        QString("* {font-size: 14px;} QFrame {background-color: %1;}")
+            .arg(utils::creatorTheme()->color(utils::Theme::LoadingBarBackground).name()));
     m_loadingLabel = new QLabel(m_loadingFrame);
     m_cancelButton = new QPushButton("Cancel", m_loadingFrame);
     connect(m_cancelButton, &QPushButton::clicked, this, [this]() {

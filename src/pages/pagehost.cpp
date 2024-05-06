@@ -7,9 +7,11 @@
 #include "dialogs/fetchdialog.h"
 #include "dialogs/pulldialog.h"
 #include "dialogs/pushdialog.h"
+#include "themes/icon.h"
 #include "ui_pagehost.h"
 
 using namespace global;
+using namespace utils;
 
 PageHost::PageHost(const RepoContext &context, const Project &project)
     : QWidget(nullptr), ui(new Ui::PageHost), m_context(context), m_project(project)
@@ -18,8 +20,16 @@ PageHost::PageHost(const RepoContext &context, const Project &project)
     ui->centerSplitter->setStretchFactor(1, 1);
 
     // Mode Buttons
-    connect(ui->changesModeBtn, &QPushButton::toggled, this, &PageHost::onChangeMode);
-    connect(ui->historyModeBtn, &QPushButton::toggled, this, &PageHost::onChangeMode);
+    QList<QPushButton *> modeBtnList{ui->changesModeBtn, ui->historyModeBtn};
+    for (auto btn : modeBtnList) {
+        btn->setStyleSheet(QString("QPushButton {border: none; outline: none; text-align: left;"
+                                   "padding-left: 14px; font-size: 14px;}"
+                                   "QPushButton:checked {background: %1;}")
+                               .arg(creatorTheme()->color(Theme::PanelItemPressed).name()));
+        QString iconFile(btn == ui->changesModeBtn ? ":/icons/changes.png" : ":/icons/history.png");
+        btn->setIcon(Icon({{iconFile, Theme::IconsBaseColor}}).icon());
+        connect(btn, &QPushButton::toggled, this, &PageHost::onChangeMode);
+    }
 
     // Ref tree
     connect(ui->refTreeView, &QTreeView::clicked, this, &PageHost::onRefClicked);

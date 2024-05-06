@@ -1,5 +1,6 @@
 #include "commitdetailscrollarea.h"
 
+#include <QApplication>
 #include <QLineEdit>
 #include <QPainter>
 #include <QPainterPath>
@@ -9,6 +10,10 @@
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QVBoxLayout>
+
+#include "themes/theme.h"
+
+using namespace utils;
 
 CommitDetailTextEdit::CommitDetailTextEdit(QWidget *parent) : QPlainTextEdit(parent)
 {
@@ -95,12 +100,14 @@ void BadgeLabel::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     QRectF badgeRect(rect().x() + 0.5, rect().top() + 0.5, width() - 1, rect().height() - 1);
+    QColor borderColor = creatorTheme()->color(Theme::BadgeBorderColor);
+    QColor backgroundColor = creatorTheme()->color(Theme::BadgeBackgoundColor);
 
     // Badge
     QPainterPath path;
     path.addRoundedRect(badgeRect, cornerRadius, cornerRadius);
-    painter.setPen(QPen(QColor(0xAAAAAA), 1));
-    painter.fillPath(path, QColor(Qt::white));
+    painter.setPen(QPen(borderColor, 1));
+    painter.fillPath(path, backgroundColor);
     painter.drawPath(path);
 
     // Text Body
@@ -109,11 +116,11 @@ void BadgeLabel::paintEvent(QPaintEvent *event)
     QRectF bodyRect = badgeRect.adjusted(nailWidth, 0, 0, 0);
     path.addRoundedRect(bodyRect, cornerRadius, cornerRadius);
     path.addRect(bodyRect.adjusted(0, 0, -cornerRadius, 0));
-    painter.fillPath(path.simplified(), QColor(0xF4F4F4));
+    painter.fillPath(path.simplified(), backgroundColor);
     painter.drawPath(path.simplified());
 
     // Icon
-    painter.setPen(QPen(QColor(0x2A2A2A), 1.4));
+    painter.setPen(QPen(qApp->palette().color(QPalette::WindowText), 1.4));
     QRectF iconRect =
         badgeRect.adjusted(iconPadding, iconPadding, -(width() - nailWidth + 1), -iconPadding);
     switch (m_type) {
@@ -145,7 +152,8 @@ void BadgeLabel::paintEvent(QPaintEvent *event)
 
 CommitDetailScrollArea::CommitDetailScrollArea(QWidget *parent) : QScrollArea(parent)
 {
-    viewport()->setStyleSheet("QWidget#detailScrollAreaWidget {background:White;}");
+    QString bg = palette().color(QPalette::Base).name();
+    viewport()->setStyleSheet(QString("QWidget#detailScrollAreaWidget {background: %1;}").arg(bg));
 }
 
 void CommitDetailScrollArea::setCommit(const Commit &commit, const QString &body)

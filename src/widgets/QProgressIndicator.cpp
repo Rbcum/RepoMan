@@ -25,9 +25,10 @@
 #include "QProgressIndicator.h"
 
 #include <QDebug>
+#include <QEvent>
 #include <QPainter>
 
-#include "qcoreevent.h"
+#include "themes/theme.h"
 
 QProgressIndicator::QProgressIndicator(QWidget *parent)
     : QWidget(parent),
@@ -35,7 +36,7 @@ QProgressIndicator::QProgressIndicator(QWidget *parent)
       m_timerId(-1),
       m_delay(40),
       m_displayedWhenStopped(false),
-      m_color(Qt::black),
+      m_color(utils::creatorTheme()->color(utils::Theme::Color::IconsBaseColor)),
       m_showCount(0)
 {
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);

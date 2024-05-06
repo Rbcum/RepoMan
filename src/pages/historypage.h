@@ -10,10 +10,10 @@
 #include "global.h"
 #include "historygraphdelegate.h"
 #include "historytablemodel.h"
-#include "reftreemodel.h"
 #include "repocontext.h"
 #include "widgets/QProgressIndicator.h"
 #include "widgets/diffscrollarea.h"
+#include "widgets/reftreemodel.h"
 
 namespace Ui {
     class HistoryPage;
