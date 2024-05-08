@@ -20,6 +20,7 @@ set(PROJECT_SOURCES
         src/mainwindow.h src/mainwindow.cpp
         src/themes/theme.cpp src/themes/theme.h src/themes/theme_p.h
         src/themes/icon.cpp src/themes/icon.h
+        src/themes/repomanstyle.h src/themes/repomanstyle.cpp
         src/dialogs/cmddialog.h src/dialogs/cmddialog.cpp
         src/dialogs/reposyncdialog.h src/dialogs/reposyncdialog.cpp
         src/dialogs/settingsdialog.h src/dialogs/settingsdialog.cpp

@@ -7,6 +7,7 @@
 #include <QFileInfo>
 
 #include "mainwindow.h"
+#include "themes/repomanstyle.h"
 
 using namespace global;
 using namespace utils;
@@ -16,8 +17,8 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QSettings settings;
 
-    // Need this so we can setStyle on individual widget with propagation, see QWidget::setStyle
-    a.setStyleSheet(" ");
+    a.setStyle(new RepoManStyle());
+    a.setStyleSheet(" ");  // For TabBarEx setStyle propagation, see QWidget::setStyle
 
     QString themeFile =
         QString(":/themes/%1.theme").arg(settings.value("theme", "light").toString());
