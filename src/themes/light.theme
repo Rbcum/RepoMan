@@ -37,6 +37,7 @@ highlightBlue=ff57b9fc
 highlightHover=ff74CBFC
 
 [Colors]
+PaletteHighlight=308CC6
 IconsBaseColor=ff282828
 IconsDisabledColor=ff323232
 
@@ -46,12 +47,15 @@ BadgeBackgoundColor=fff4f4f4
 PanelItemPressed=cccccc
 PanelItemHovered=ffdddddd
 LoadingBarBackground=B2BABC
-DiffLineAdd=DAFBE1
-DiffLineRemove=FFEBE9
+DiffLineAdd=3343F037
+DiffLineRemove=33F66B6A
+DiffLineDummy=F8F9FA
+DiffHunkHeader=A0A0A0
+LineNumber=A0A0A0
 LineNumberBackground=F8F9FA
 
 [Flags]
 DarkUserInterface=false
-DerivePaletteFromThemeIfNeeded=true
+DerivePaletteFromThemeIfNeeded=false
 WindowColorAsBase=false
 ToolBarIconShadow=false

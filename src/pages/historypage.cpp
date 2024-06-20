@@ -15,7 +15,7 @@ HistoryPage::HistoryPage(QWidget *parent, const Project &project)
 {
     ui->setupUi(this);
     ui->splitter->setSizes(QList<int>({300, 300}));
-    ui->splitter_2->setSizes(QList<int>({200, 300}));
+    ui->splitter_2->setSizes(QList<int>({110, 300}));
     ui->splitter_3->setSizes(QList<int>({200, 200}));
 
     m_indicator = new QProgressIndicator(this);
@@ -92,7 +92,7 @@ void HistoryPage::updateUI(unsigned flags)
         }
     }
     if (flags & Diff) {
-        ui->diffScrollArea->setDiffHunks(m_diffResult.hunks);
+        ui->diffView->setDiffHunks(m_diffResult.file, m_diffResult.hunks);
     }
 }
 
@@ -114,7 +114,7 @@ void HistoryPage::reset(unsigned flags)
     if (flags & Diff) {
         m_diffResult = {};
         m_diffWorker.cancel();
-        ui->diffScrollArea->reset();
+        ui->diffView->reset();
     }
 }
 
@@ -229,13 +229,14 @@ void HistoryPage::onFileSelected()
         cmd = QString("git diff-tree -M -p --root %1 -- %2").arg(commit.hash, file.path);
     }
     m_indicator->startHint();
-    m_diffWorker = QtConcurrent::run([projectPath, cmd](QPromise<DiffResult> &promise) {
+    m_diffWorker = QtConcurrent::run([=](QPromise<DiffResult> &promise) {
         QString cmdResult = global::getCmdResult(cmd, projectPath);
         if (promise.isCanceled()) {
             return;
         }
         DiffResult result;
-        result.hunks = global::parseDiffHunks(cmdResult);
+        result.file = file;
+        result.hunks = parseDiffHunks(cmdResult);
         promise.addResult(result);
     });
     QPointer thisPtr(this);

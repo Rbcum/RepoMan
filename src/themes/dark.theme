@@ -90,8 +90,11 @@ BadgeBackgoundColor=ff535353
 PanelItemPressed=ff606060
 PanelItemHovered=ff707070
 LoadingBarBackground=222222
-DiffLineAdd=12261E
-DiffLineRemove=301A1F
+DiffLineAdd=3353AF55
+DiffLineRemove=33AF5353
+DiffLineDummy=383838
+DiffHunkHeader=727272
+LineNumber=A0A0A0
 LineNumberBackground=383838
 
 [Flags]

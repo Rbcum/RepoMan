@@ -13,7 +13,7 @@
 #include "pages/historytablemodel.h"
 #include "repocontext.h"
 #include "widgets/QProgressIndicator.h"
-#include "widgets/diffscrollarea.h"
+#include "widgets/diffutils.h"
 
 namespace Ui {
     class ChangesPage;
@@ -52,6 +52,7 @@ private:
     QList<DiffHunk> m_diffHunks;
     int m_stagedSelection = -1;
     int m_unstagedSelection = -1;
+    GitFile m_file;
 
     struct ChangesResult
     {

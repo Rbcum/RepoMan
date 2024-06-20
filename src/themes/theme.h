@@ -86,6 +86,9 @@ namespace utils {
             LoadingBarBackground,
             DiffLineAdd,
             DiffLineRemove,
+            DiffLineDummy,
+            DiffHunkHeader,
+            LineNumber,
             LineNumberBackground
         };
 

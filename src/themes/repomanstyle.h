@@ -6,6 +6,7 @@
 
 class RepoManStyle : public QProxyStyle
 {
+    Q_OBJECT
 public:
     RepoManStyle();
     ~RepoManStyle();

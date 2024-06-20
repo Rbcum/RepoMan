@@ -21,6 +21,7 @@ CommitDetailTextEdit::CommitDetailTextEdit(QWidget *parent) : QPlainTextEdit(par
     QFont font;
     font.setPointSize(10);
     setFont(font);
+    setWordWrapMode(QTextOption::NoWrap);
     setReadOnly(true);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

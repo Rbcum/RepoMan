@@ -12,7 +12,7 @@
 #include "historytablemodel.h"
 #include "repocontext.h"
 #include "widgets/QProgressIndicator.h"
-#include "widgets/diffscrollarea.h"
+#include "widgets/difftextedit.h"
 #include "widgets/reftreemodel.h"
 
 namespace Ui {
@@ -65,6 +65,7 @@ private:
     };
     struct DiffResult
     {
+        GitFile file;
         QList<DiffHunk> hunks;
     };
 

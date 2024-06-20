@@ -7,7 +7,6 @@ RepoManStyle::RepoManStyle()
 RepoManStyle::~RepoManStyle()
 {
 }
-
 QSize RepoManStyle::sizeFromContents(
     ContentsType ct, const QStyleOption *opt, const QSize &contentsSize, const QWidget *w) const
 {

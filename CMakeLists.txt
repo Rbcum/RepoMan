@@ -34,6 +34,7 @@ set(PROJECT_SOURCES
         src/dialogs/deleterefdialog.h src/dialogs/deleterefdialog.cpp
         src/dialogs/warningfilelistdialog.h src/dialogs/warningfilelistdialog.cpp
         src/dialogs/switchmanifestdialog.h src/dialogs/switchmanifestdialog.cpp
+        src/dialogs/repoinitdialog.h src/dialogs/repoinitdialog.cpp
         src/pages/changespage.h src/pages/changespage.cpp
         src/pages/historypage.h src/pages/historypage.cpp
         src/pages/pagehost.h src/pages/pagehost.cpp
@@ -42,14 +43,15 @@ set(PROJECT_SOURCES
         src/pages/newtabpage.h src/pages/newtabpage.cpp
         src/widgets/QProgressIndicator.h src/widgets/QProgressIndicator.cpp
         src/widgets/qhistorytableview.h src/widgets/qhistorytableview.cpp
-        src/widgets/diffscrollarea.h src/widgets/diffscrollarea.cpp
+        src/widgets/difftextedit.h src/widgets/difftextedit.cpp
+        src/widgets/diffview.h src/widgets/diffview.cpp
+        src/widgets/diffutils.h src/widgets/diffutils.cpp
         src/widgets/commitdetailscrollarea.h src/widgets/commitdetailscrollarea.cpp
         src/widgets/reftreeview.h src/widgets/reftreeview.cpp
         src/widgets/reftreemodel.h src/widgets/reftreemodel.cpp
         src/widgets/reftreedelegate.h src/widgets/reftreedelegate.cpp
         src/widgets/tabwidgetex.h src/widgets/tabwidgetex.cpp
         src/widgets/pathfinderview.h src/widgets/pathfinderview.cpp
-        src/dialogs/repoinitdialog.h src/dialogs/repoinitdialog.cpp
 )
 
 set(PTY_SOURCES
@@ -58,7 +60,6 @@ set(PTY_SOURCES
         src/pty/kptyprocess.cpp src/pty/kptyprocess.h
         src/pty/Pty.cpp src/pty/Pty.h
         src/pty/kpty.cpp
-
         src/pty/ptydisplay.h src/pty/ptydisplay.cpp
         src/pty/kshell.h src/pty/kshell_unix.cpp
 )

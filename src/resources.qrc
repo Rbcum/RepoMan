@@ -20,5 +20,6 @@
         <file>icons/sync.png</file>
         <file>icons/tag.png</file>
         <file>icons/term.png</file>
+        <file>icons/diff-split.png</file>
     </qresource>
 </RCC>

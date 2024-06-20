@@ -177,7 +177,7 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>307</width>
+           <width>195</width>
            <height>68</height>
           </rect>
          </property>
@@ -241,27 +241,7 @@
       <widget class="QWidget" name="verticalLayoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout"/>
-        </item>
-        <item>
-         <widget class="DiffScrollArea" name="diffScrollArea">
-          <property name="styleSheet">
-           <string notr="true"/>
-          </property>
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="diffScrollAreaWidget">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>83</width>
-             <height>132</height>
-            </rect>
-           </property>
-          </widget>
-         </widget>
+         <widget class="DiffView" name="diffView" native="true"/>
         </item>
        </layout>
       </widget>
@@ -277,15 +257,15 @@
    <header>widgets/qhistorytableview.h</header>
   </customwidget>
   <customwidget>
-   <class>DiffScrollArea</class>
-   <extends>QScrollArea</extends>
-   <header>widgets/diffscrollarea.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>CommitDetailScrollArea</class>
    <extends>QScrollArea</extends>
    <header>widgets/commitdetailscrollarea.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DiffView</class>
+   <extends>QWidget</extends>
+   <header>widgets/diffview.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

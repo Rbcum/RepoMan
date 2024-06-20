@@ -100,7 +100,7 @@ void ChangesPage::updateUI(unsigned flags)
         }
     }
     if (flags & Diff) {
-        ui->diffScrollArea->setDiffHunks(m_diffHunks);
+        ui->diffView->setDiffHunks(m_file, m_diffHunks);
     }
 }
 
@@ -112,12 +112,11 @@ void ChangesPage::reset(unsigned flags)
         m_stagedList.clear();
         ui->unstagedTable->setRowCount(0);
         ui->stagedTable->setRowCount(0);
-        ui->curFileLabel->clear();
     }
     if (flags & Diff) {
         m_diffWorker.cancel();
         m_diffHunks.clear();
-        ui->diffScrollArea->reset();
+        ui->diffView->reset();
     }
     if (flags & Commit) {
         m_amendWorker.cancel();
@@ -207,7 +206,7 @@ void ChangesPage::getDiffAsync(const QString &projectPath, const GitFile &file, 
         }
 
         DiffResult result;
-        result.hunks = global::parseDiffHunks(cmdResult);
+        result.hunks = parseDiffHunks(cmdResult);
         promise.addResult(result);
     });
     QPointer thisPtr(this);
@@ -352,7 +351,7 @@ void ChangesPage::onFileSelected(QTableWidgetItem *current, QTableWidgetItem *pr
         m_stagedSelection = -1;
         m_unstagedSelection = current->row();
     }
-    ui->curFileLabel->setText(file.path);
+    m_file = file;
     getDiffAsync(m_project.absPath, file, sender() == ui->stagedTable, m_indicator);
 }
 

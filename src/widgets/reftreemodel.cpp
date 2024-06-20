@@ -4,7 +4,6 @@
 #include <QFont>
 #include <QIcon>
 
-#include "global.h"
 #include "themes/icon.h"
 #include "themes/theme.h"
 
