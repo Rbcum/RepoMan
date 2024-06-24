@@ -103,7 +103,7 @@ int DiffTextEdit::lineNumberAreaWidth()
     int max;
     switch (m_mode) {
         case SplitOld:
-            max = lastHunk.newStart + lastHunk.newTotal;
+            max = lastHunk.oldStart + lastHunk.oldTotal;
             break;
         case SplitNew:
             max = lastHunk.newStart + lastHunk.newTotal;
