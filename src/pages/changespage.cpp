@@ -37,10 +37,12 @@ ChangesPage::ChangesPage(QWidget *parent, const Project &project)
         &ChangesPage::onFileListMenuRequested);
     connect(ui->stageBtn, &QPushButton::clicked, this, &ChangesPage::onTableButtonClicked);
 
+    connect(ui->diffView, &DiffView::diffParametersChanged, this, &ChangesPage::getDiffAsync);
+
     connect(ui->amendCheckBox, &QCheckBox::toggled, this, &ChangesPage::onAmendToggled);
     connect(ui->commitButton, &QPushButton::clicked, this, &ChangesPage::onCommit);
 
-    getChangesAsync(m_project.absPath, m_indicator);
+    getChangesAsync();
 }
 
 ChangesPage::~ChangesPage()
@@ -57,7 +59,7 @@ void ChangesPage::showEvent(QShowEvent *event)
 void ChangesPage::refresh()
 {
     reset(List | Diff);
-    getChangesAsync(m_project.absPath, m_indicator);
+    getChangesAsync();
 }
 
 void ChangesPage::updateUI(unsigned flags)
@@ -125,12 +127,32 @@ void ChangesPage::reset(unsigned flags)
     }
 }
 
-void ChangesPage::getChangesAsync(const QString &projectPath, QProgressIndicator *const indicator)
+static bool isStagedFile(const QString &mode)
 {
+    // Untracked
+    if (mode == "??") {
+        return false;
+    }
+    // Unmerged
+    if (mode == "AA" || mode == "DD" || mode.contains("U")) {
+        return false;
+    }
+    if (mode[0] != ' ') {
+        return true;
+    }
+    if (mode[1] != ' ') {
+        return false;
+    }
+    Q_UNREACHABLE();
+}
+
+void ChangesPage::getChangesAsync()
+{
+    QString projectPath = m_project.absPath;
     if (projectPath.isEmpty()) {
         return;
     }
-    indicator->startHint();
+    m_indicator->startHint();
     m_changesWorker = QtConcurrent::run([projectPath](QPromise<ChangesResult> &promise) {
         QString cmdResult =
             global::getCmdResult("git status --porcelain --untracked-files=all", projectPath);
@@ -152,20 +174,9 @@ void ChangesPage::getChangesAsync(const QString &projectPath, QProgressIndicator
             if (path.contains(" -> ")) {
                 path = path.split(" -> ").last();
             }
-            // Untracked
-            if (mode == "??") {
-                result.unstagedList.emplace_back(path, mode);
-                continue;
-            }
-            // Unmerged
-            if (mode == "AA" || mode == "DD" || mode.contains("U")) {
-                result.unstagedList.emplace_back(path, mode);
-                continue;
-            }
-            if (mode[0] != ' ') {
+            if (isStagedFile(mode)) {
                 result.stagedList.emplace_back(path, mode);
-            }
-            if (mode[1] != ' ') {
+            } else {
                 result.unstagedList.emplace_back(path, mode);
             }
         }
@@ -187,18 +198,21 @@ void ChangesPage::getChangesAsync(const QString &projectPath, QProgressIndicator
         });
 }
 
-void ChangesPage::getDiffAsync(const QString &projectPath, const GitFile &file, bool staged,
-    QProgressIndicator *const indicator)
+void ChangesPage::getDiffAsync()
 {
     QString cmd;
-    if (file.mode == "??") {
-        cmd = QString(R"(git diff -- /dev/null "%1")").arg(file.path);
-    } else if (staged) {
-        cmd = QString(R"(git diff -M --cached -- "%1")").arg(file.path);
+    if (m_file.mode == "??") {
+        cmd = QString(R"(git diff -U%1 -- /dev/null "%2")")
+                  .arg(QString::number(ui->diffView->getContextLines()), m_file.path);
+    } else if (isStagedFile(m_file.mode)) {
+        cmd = QString(R"(git diff -U%1 -M --cached -- "%2")")
+                  .arg(QString::number(ui->diffView->getContextLines()), m_file.path);
     } else {
-        cmd = QString(R"(git diff -M -- "%1")").arg(file.path);
+        cmd = QString(R"(git diff -U%1 -M -- "%2")")
+                  .arg(QString::number(ui->diffView->getContextLines()), m_file.path);
     }
-    indicator->startHint();
+    QString projectPath = m_project.absPath;
+    m_indicator->startHint();
     m_diffWorker = QtConcurrent::run([projectPath, cmd](QPromise<DiffResult> &promise) {
         QString cmdResult = global::getCmdResult(cmd, projectPath);
         if (promise.isCanceled()) {
@@ -257,10 +271,11 @@ void ChangesPage::onFileListMenuRequested(const QPoint &pos)
         if (WarningFileListDialog::confirm(this, "Confirm Discard",
                 "Changes in the following files will be discarded, THIS CANNOT BE UNDONE",
                 selectedFiles)) {
-            batchFilesAction(sourceTable == ui->stagedTable,
-                QStringList() << "git reset --"
-                              << "git checkout --",
-                QStringList() << "git checkout --", true);
+            if (sourceTable == ui->unstagedTable) {
+                batchFilesAction(ui->unstagedTable, {"git checkout --"});
+            } else {
+                batchFilesAction(ui->stagedTable, {"git reset --", "git checkout --"});
+            }
         }
     });
 
@@ -277,50 +292,55 @@ void ChangesPage::onFileListMenuRequested(const QPoint &pos)
                         "The following files will be removed, THIS CANNOT BE UNDONE if file is not "
                         "tracked by git",
                         selectedFiles)) {
-                    batchFilesAction(sourceTable == ui->stagedTable,
-                        QStringList() << "git reset --"
-                                      << "rm",
-                        QStringList() << "rm", true);
+                    if (sourceTable == ui->unstagedTable) {
+                        batchFilesAction(ui->unstagedTable, {"rm"});
+                    } else {
+                        batchFilesAction(ui->stagedTable, {"git reset --", "rm"});
+                    }
                 }
             })
         ->setEnabled(enableRemove);
     menu.addSeparator();
     menu.addAction(sourceTable == ui->stagedTable ? "Unstage" : "Stage", this, [&]() {
-        batchFilesAction(sourceTable == ui->unstagedTable, {"git add --"}, {"git reset --"});
+        if (sourceTable == ui->unstagedTable) {
+            batchFilesAction(ui->unstagedTable, {"git add --"});
+        } else {
+            batchFilesAction(ui->stagedTable, {"git reset --"});
+        }
     });
     menu.addAction(sourceTable == ui->stagedTable ? "Unstage All" : "Stage All", this, [&]() {
         QString cmd = sourceTable == ui->stagedTable ? "git reset" : "git add .";
         CmdDialog::execute(this, cmd, m_project.absPath, true);
         reset(List | Diff);
-        getChangesAsync(m_project.absPath, m_indicator);
+        getChangesAsync();
     });
     menu.exec(sourceTable->mapToGlobal(pos));
 }
 
 void ChangesPage::onFileDoubleClicked(int row, int column)
 {
-    batchFilesAction(sender() == ui->unstagedTable, {"git add --"}, {"git reset --"});
+    if (sender() == ui->unstagedTable) {
+        batchFilesAction(ui->unstagedTable, {"git add --"});
+    } else {
+        batchFilesAction(ui->stagedTable, {"git reset --"});
+    }
 }
 
 void ChangesPage::onTableButtonClicked()
 {
-    batchFilesAction(sender() == ui->stageBtn, {"git add --"}, {"git reset --"});
+    if (sender() == ui->stageBtn) {
+        batchFilesAction(ui->unstagedTable, {"git add --"});
+    } else {
+        batchFilesAction(ui->stagedTable, {"git reset --"});
+    }
 }
 
-void ChangesPage::batchFilesAction(bool updateIndex, const QStringList &updateIndexCmds,
-    const QStringList &updateWorkingTreeCmds, bool reverse)
+void ChangesPage::batchFilesAction(QTableWidget *table, const QStringList &cmds)
 {
-    const QList<GitFile> &fileList = updateIndex ? (reverse ? m_stagedList : m_unstagedList)
-                                                 : (reverse ? m_unstagedList : m_stagedList);
-    const QModelIndexList &indexes =
-        updateIndex ? (reverse ? ui->stagedTable->selectionModel()->selectedRows()
-                               : ui->unstagedTable->selectionModel()->selectedRows())
-                    : (reverse ? ui->unstagedTable->selectionModel()->selectedRows()
-                               : ui->stagedTable->selectionModel()->selectedRows());
-
+    const QModelIndexList &indexes = table->selectionModel()->selectedRows();
     if (indexes.isEmpty()) return;
+    const QList<GitFile> &fileList = table == ui->stagedTable ? m_stagedList : m_unstagedList;
 
-    const QStringList &cmds = updateIndex ? updateIndexCmds : updateWorkingTreeCmds;
     QStringList fullCmds;
     for (auto &c : cmds) {
         QString fullCmd = c;
@@ -332,7 +352,7 @@ void ChangesPage::batchFilesAction(bool updateIndex, const QStringList &updateIn
 
     CmdDialog::execute(this, fullCmds, m_project.absPath, true);
     reset(List | Diff);
-    getChangesAsync(m_project.absPath, m_indicator);
+    getChangesAsync();
 }
 
 void ChangesPage::onFileSelected(QTableWidgetItem *current, QTableWidgetItem *previous)
@@ -352,7 +372,7 @@ void ChangesPage::onFileSelected(QTableWidgetItem *current, QTableWidgetItem *pr
         m_unstagedSelection = current->row();
     }
     m_file = file;
-    getDiffAsync(m_project.absPath, file, sender() == ui->stagedTable, m_indicator);
+    getDiffAsync();
 }
 
 void ChangesPage::onAmendToggled(bool checked)

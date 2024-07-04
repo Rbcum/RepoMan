@@ -47,6 +47,8 @@ HistoryPage::HistoryPage(QWidget *parent, const Project &project)
     ui->fileTable->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     connect(ui->fileTable, &QTableWidget::itemSelectionChanged, this, &HistoryPage::onFileSelected);
 
+    connect(ui->diffView, &DiffView::diffParametersChanged, this, &HistoryPage::onFileSelected);
+
     m_historyModel->fetchMore(QModelIndex());
 }
 
@@ -223,10 +225,12 @@ void HistoryPage::onFileSelected()
     const GitFile &file = m_detailResult.fileList.at(indexes.first().row());
     QString cmd;
     if (commit.parents.size() > 1) {
-        cmd =
-            QString("git diff -M %1 %2 -- %3").arg(commit.parents.first(), commit.hash, file.path);
+        cmd = QString("git diff -U%1 -M %2 %3 -- %4")
+                  .arg(QString::number(ui->diffView->getContextLines()), commit.parents.first(),
+                      commit.hash, file.path);
     } else {
-        cmd = QString("git diff-tree -M -p --root %1 -- %2").arg(commit.hash, file.path);
+        cmd = QString("git diff-tree -M -p -U%1 --root %2 -- %3")
+                  .arg(QString::number(ui->diffView->getContextLines()), commit.hash, file.path);
     }
     m_indicator->startHint();
     m_diffWorker = QtConcurrent::run([=](QPromise<DiffResult> &promise) {

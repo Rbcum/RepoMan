@@ -21,5 +21,6 @@
         <file>icons/tag.png</file>
         <file>icons/term.png</file>
         <file>icons/diff-split.png</file>
+        <file>icons/menu.png</file>
     </qresource>
 </RCC>

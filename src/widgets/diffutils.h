@@ -15,7 +15,7 @@ struct DiffHunk
     QList<int> splitOldLNs;
     QList<int> splitNewLNs;
 
-    QStringList lines[3];
+    QStringList lines[3]; // indexed by DiffMode
 };
 
 enum DiffMode

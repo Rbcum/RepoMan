@@ -67,11 +67,9 @@ private:
     QFuture<ChangesResult> m_changesWorker;
     QFuture<DiffResult> m_diffWorker;
     QFuture<QString> m_amendWorker;
-    void getChangesAsync(const QString &projectPath, QProgressIndicator *const indicator);
-    void getDiffAsync(const QString &projectPath, const GitFile &file, bool staged,
-        QProgressIndicator *const indicator);
-    void batchFilesAction(bool updateIndex, const QStringList &updateIndexCmds,
-        const QStringList &updateWorkingTreeCmds, bool reverse = false);
+    void getChangesAsync();
+    void getDiffAsync();
+    void batchFilesAction(QTableWidget *table, const QStringList &cmds);
 
 signals:
     void commitEvent(const HistorySelectionArg &arg = HistorySelectionArg());

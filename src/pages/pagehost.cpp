@@ -2,6 +2,7 @@
 
 #include <QDesktopServices>
 #include <QShortcut>
+#include <QUrl>
 
 #include "dialogs/cleandialog.h"
 #include "dialogs/fetchdialog.h"
