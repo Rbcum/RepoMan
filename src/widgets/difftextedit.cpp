@@ -136,6 +136,8 @@ void DiffTextEdit::setDiffHunks(const QList<DiffHunk> &hunks)
         for (auto &line : lines) {
             if (line.startsWith("@") || line.isEmpty()) {
                 appendPlainText(line);
+            } else if (line.startsWith("\\")) {
+                appendPlainText(line.sliced(2));
             } else {
                 appendPlainText(line.sliced(1));
             }
@@ -181,9 +183,9 @@ void DiffTextEdit::applyLineStyles()
                 color = creatorTheme()->color(Theme::DiffLineAdd);
             } else if (line.startsWith("-")) {
                 color = creatorTheme()->color(Theme::DiffLineRemove);
-            } else if (line.startsWith("@")) {
+            } else if (line.startsWith("@") || line.startsWith("\\")) {
                 foreground = true;
-                color = creatorTheme()->color(Theme::DiffHunkHeader);
+                color = creatorTheme()->color(Theme::DiffLineMeta);
             } else if (line.isEmpty()) {
                 color = creatorTheme()->color(Theme::DiffLineDummy);
             }

@@ -73,16 +73,38 @@ QList<DiffHunk> parseDiffHunks(const QString &diffText)
                 deleteCount = 0;
             }
 
-            hk->unifiedOldLNs.append(oldLN);
-            hk->unifiedNewLNs.append(newLN);
-
-            hk->splitOldLNs.append(oldLN++);
+            if (line.startsWith("\\")) {
+                hk->unifiedOldLNs.append(0);
+                hk->unifiedNewLNs.append(0);
+                hk->splitOldLNs.append(0);
+                hk->splitNewLNs.append(0);
+            } else {
+                hk->unifiedOldLNs.append(oldLN);
+                hk->unifiedNewLNs.append(newLN);
+                hk->splitOldLNs.append(oldLN++);
+                hk->splitNewLNs.append(newLN++);
+            }
             hk->lines[SplitOld].append(line);
-            hk->splitNewLNs.append(newLN++);
             hk->lines[SplitNew].append(line);
         }
         hk->lines[Unified].append(line);
     }
+
+    // When changes last to the end
+    if (addCount || deleteCount) {
+        if (addCount) {
+            for (int i = 0; i < addCount; ++i) {
+                hk->splitOldLNs.append(0);
+                hk->lines[SplitOld].append("");
+            }
+        } else {
+            for (int i = 0; i < deleteCount; ++i) {
+                hk->splitNewLNs.append(0);
+                hk->lines[SplitNew].append("");
+            }
+        }
+    }
+
     if (hk) {
         hunks.append(hk.value());
     }

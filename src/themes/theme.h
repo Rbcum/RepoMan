@@ -87,7 +87,7 @@ namespace utils {
             DiffLineAdd,
             DiffLineRemove,
             DiffLineDummy,
-            DiffHunkHeader,
+            DiffLineMeta,
             LineNumber,
             LineNumberBackground
         };
