@@ -19,6 +19,7 @@ public:
     void setDiffHunks(const QList<DiffHunk> &hunks);
     void setMode(DiffMode mode);
     void reset();
+    int firstVisibleBlockNumber();
 
 protected:
     void resizeEvent(QResizeEvent *event) override;

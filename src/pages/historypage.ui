@@ -172,16 +172,7 @@
         <property name="widgetResizable">
          <bool>true</bool>
         </property>
-        <widget class="QWidget" name="detailScrollAreaWidget">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>195</width>
-           <height>68</height>
-          </rect>
-         </property>
-        </widget>
+        <widget class="QWidget" name="detailScrollAreaWidget"/>
        </widget>
        <widget class="QTableWidget" name="fileTable">
         <property name="styleSheet">
@@ -252,6 +243,12 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>DiffView</class>
+   <extends>QWidget</extends>
+   <header>widgets/diffview.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
    <class>QHistoryTableView</class>
    <extends>QTableView</extends>
    <header>widgets/qhistorytableview.h</header>
@@ -260,12 +257,6 @@
    <class>CommitDetailScrollArea</class>
    <extends>QScrollArea</extends>
    <header>widgets/commitdetailscrollarea.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>DiffView</class>
-   <extends>QWidget</extends>
-   <header>widgets/diffview.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -157,6 +157,11 @@ void DiffTextEdit::reset()
     setDiffHunks({});
 }
 
+int DiffTextEdit::firstVisibleBlockNumber()
+{
+    return firstVisibleBlock().blockNumber();
+}
+
 void DiffTextEdit::resizeEvent(QResizeEvent *event)
 {
     QPlainTextEdit::resizeEvent(event);

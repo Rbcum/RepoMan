@@ -12,6 +12,7 @@
 #include "historytablemodel.h"
 #include "repocontext.h"
 #include "widgets/QProgressIndicator.h"
+#include "widgets/diffutils.h"
 #include "widgets/reftreemodel.h"
 
 namespace Ui {

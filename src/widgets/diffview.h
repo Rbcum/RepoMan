@@ -38,6 +38,15 @@ private:
     QList<DiffHunk> m_hunks;
     bool m_updatingUI = false;
 
+    struct PositionInfo
+    {
+        QPair<int, int> topLN;
+        int offset = 0;
+    };
+    std::optional<PositionInfo> m_scrollPosition;
+
+    void saveScrollPosition();
+    void restoreScrollPosition();
     void syncScrollBar(QScrollBar *leftScrollBar, QScrollBar *rightScrollBar);
 };
 
