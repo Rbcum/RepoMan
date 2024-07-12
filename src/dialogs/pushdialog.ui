@@ -97,9 +97,6 @@
         </item>
         <item>
          <widget class="QLineEdit" name="replaceHostEdit">
-          <property name="styleSheet">
-           <string notr="true">QLineEdit:disabled {color: #808080; background-color: #F0F0F0;}</string>
-          </property>
           <property name="readOnly">
            <bool>false</bool>
           </property>
